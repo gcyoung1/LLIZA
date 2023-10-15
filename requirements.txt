@@ -1,0 +1,3 @@
+django
+openai
+gunicorn # for running the server
