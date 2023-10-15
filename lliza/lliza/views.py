@@ -79,8 +79,8 @@ def webhook(request):
 
                 carl = load_carlbot(psid)
                 print("Carlbot loaded!")
+                print(os.environ.get("OPENAI_API_KEY", "No API key found!"))
                 carl.add_message(role="user", message=text)
-                print(os.environ["OPENAI_API_KEY"])
                 reply = carl.get_response()
                 print(reply)
                 carl.add_message(role="assistant", message=reply)
