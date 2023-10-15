@@ -78,9 +78,11 @@ def webhook(request):
                 print("Received message: " + text)
 
                 carl = load_carlbot(psid)
-
+                print("Carlbot loaded!")
                 carl.add_message(role="user", message=text)
+                print(os.environ["OPENAI_API_KEY"])
                 reply = carl.get_response()
+                print(reply)
                 carl.add_message(role="assistant", message=reply)
                 send_reply(psid, reply)
                 save_carlbot(psid, carl)
