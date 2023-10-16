@@ -18,10 +18,10 @@ def load_carlbot(psid: str):
     carl = CarlBot("You are Carl Rogers texting a client.", 10, 10)
     print("Trying to load memory...")
     if cache.get(psid) is not None:
-        print("Found somethin")
+        print(f"Found somethin: {cache.get(psid)}")
         dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
         carl.load(dialogue_buffer, summary_buffer, crisis_mode)
-        print(f"Loaded memorty: {carl.crises_mode}")
+        print(f"Loaded memorty: {carl.crisis_mode}")
     return carl
 
 
