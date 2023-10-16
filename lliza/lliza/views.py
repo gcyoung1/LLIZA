@@ -17,7 +17,6 @@ PAGE_ACCESS_TOKEN = os.environ["PAGE_ACCESS_TOKEN"]
 def load_carlbot(psid: str):
     carl = CarlBot("You are Carl Rogers texting a client.", 10, 10)
     print("Trying to load memory...")
-    cache.delete(psid)
     if cache.get(psid) is not None:
         print("Found somethin")
         dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
