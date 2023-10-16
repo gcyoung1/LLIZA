@@ -18,14 +18,14 @@ def load_carlbot(psid: str):
     carl = CarlBot("You are Carl Rogers texting a client.", 10, 10)
     print("Trying to load memory...")
     if cache.get(psid) is not None:
-        dialogue_buffer, summary_buffer = cache.get(psid)
-        carl.load(dialogue_buffer, summary_buffer)
+        dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
+        carl.load(dialogue_buffer, summary_buffer, crisis_mode)
         print("Memory found!")
     return carl
 
 
 def save_carlbot(psid: str, carl: CarlBot):
-    cache.set(psid, (carl.dialogue_buffer, carl.summary_buffer))
+    cache.set(psid, (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
     print("Memory saved!")
 
 
@@ -70,23 +70,21 @@ def webhook(request):
                 if 'quick_reply' in message:
                     if message['quick_reply']['payload'] == "DELETE_DATA":
                         cache.delete(psid)
-                        send_reply(psid, "Session history deleted.")
-                        return HttpResponse('WEBHOOK EVENT HANDLED',
-                                            status=200)
+                        reply = "Session history deleted."
+                else:
+                    text = message['text']
+                    print("Received message: " + text)
 
-                text = message['text']
-                print("Received message: " + text)
+                    carl = load_carlbot(psid)
+                    print("Carlbot loaded!")
+                    print(os.environ.get("OPENAI_API_KEY", "No API key found!"))
+                    carl.add_message(role="user", message=text)
+                    reply = carl.get_response()
+                    print(reply)
+                    carl.add_message(role="assistant", message=reply)
+                    save_carlbot(psid, carl)
 
-                carl = load_carlbot(psid)
-                print("Carlbot loaded!")
-                print(os.environ.get("OPENAI_API_KEY", "No API key found!"))
-                carl.add_message(role="user", message=text)
-                reply = carl.get_response()
-                print(reply)
-                carl.add_message(role="assistant", message=reply)
                 send_reply(psid, reply)
-                save_carlbot(psid, carl)
-
             return HttpResponse('WEBHOOK EVENT HANDLED', status=200)
         return HttpResponse('INVALID WEBHOOK EVENT', status=403)
 

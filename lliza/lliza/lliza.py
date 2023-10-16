@@ -108,9 +108,10 @@ class CarlBot:
         print("Got response")
         return response.choices[0].message.content
 
-    def load(self, dialogue_buffer, summary_buffer):
+    def load(self, dialogue_buffer, summary_buffer, crisis_mode):
         self.dialogue_buffer = dialogue_buffer
         self.summary_buffer = summary_buffer
+        self.crisis_mode = crisis_mode
 
 
 if __name__ == "__main__":
