@@ -20,11 +20,12 @@ def load_carlbot(psid: str):
     if cache.get(psid) is not None:
         dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
         carl.load(dialogue_buffer, summary_buffer, crisis_mode)
-        print("Memory found!")
+        print(f"Loaded memorty: {carl.crises_mode}")
     return carl
 
 
 def save_carlbot(psid: str, carl: CarlBot):
+    print(f"Saving memorty: crisis mode {carl.crisis_mode}")
     cache.set(psid, (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
     print("Memory saved!")
 
@@ -77,7 +78,6 @@ def webhook(request):
 
                     carl = load_carlbot(psid)
                     print("Carlbot loaded!")
-                    print(os.environ.get("OPENAI_API_KEY", "No API key found!"))
                     carl.add_message(role="user", message=text)
                     reply = carl.get_response()
                     print(reply)
