@@ -1,4 +1,5 @@
 import requests
+import os
 import urllib3
 import openai
 from typing import List
@@ -69,7 +70,9 @@ class CarlBot:
                 self.stringify_summary(self.summary_buffer))
 
     def is_crisis(self, message):
+        print("Are we in crisis? (with api key " + openai.api_key + ") aka " + os.environ.get("OPENAI_API_KEY"))
         response = openai.Moderation.create(input=message, )
+        print("Got response")
         moderation_categories = response["results"][0]["categories"]
         return any(moderation_categories[category] for category in
                    ["self-harm", "self-harm/intent", "self-harm/instructions"])
@@ -77,6 +80,7 @@ class CarlBot:
     def add_message(self, role, message):
         print("Adding message")
         if self.crisis_mode:
+            print("sike we're in crisis mode")
             return
         if role == "user" and self.is_crisis(message):
             self.crisis_mode = True
