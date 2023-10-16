@@ -70,17 +70,13 @@ class CarlBot:
                 self.stringify_summary(self.summary_buffer))
 
     def is_crisis(self, message):
-        print("Are we in crisis? (with api key " + openai.api_key + ") aka " + os.environ.get("OPENAI_API_KEY"))
         response = openai.Moderation.create(input=message, )
-        print("Got response")
         moderation_categories = response["results"][0]["categories"]
         return any(moderation_categories[category] for category in
                    ["self-harm", "self-harm/intent", "self-harm/instructions"])
 
     def add_message(self, role, message):
-        print("Adding message")
         if self.crisis_mode:
-            print("sike we're in crisis mode")
             return
         if role == "user" and self.is_crisis(message):
             self.crisis_mode = True
@@ -92,20 +88,17 @@ class CarlBot:
             self.update_summary()
             self.dialogue_buffer = self.dialogue_buffer[
                 -self.min_n_dialogue_buffer_messages:]
-        print("Added message")
 
     @property
     def summary_buffer_str(self):
         return self.stringify_summary(self.summary_buffer)
 
     def get_response(self):
-        print("Getting response")
         if self.crisis_mode:
             return self.crisis_response
         response = openai.ChatCompletion.create(
             model="ft:gpt-3.5-turbo-0613:personal:recipe-ner:7rdio4Q4",
             messages=self.messages)
-        print("Got response")
         return response.choices[0].message.content
 
     def load(self, dialogue_buffer, summary_buffer, crisis_mode):
@@ -115,7 +108,7 @@ class CarlBot:
 
 
 if __name__ == "__main__":
-    carl = CarlBot("You are a chatbot therapist LLIZA trained by Carl Rogers.",
+    carl = CarlBot("You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
                    10, 10)
 
     while True:

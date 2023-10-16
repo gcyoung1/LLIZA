@@ -15,20 +15,15 @@ TOKEN = os.environ["TOKEN"]
 PAGE_ACCESS_TOKEN = os.environ["PAGE_ACCESS_TOKEN"]
 
 def load_carlbot(psid: str):
-    carl = CarlBot("You are Carl Rogers texting a client.", 10, 10)
-    print("Trying to load memory...")
+    carl = CarlBot("You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.", 10, 10)
     if cache.get(psid) is not None:
-        print(f"Found somethin: {cache.get(psid)}")
         dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
         carl.load(dialogue_buffer, summary_buffer, crisis_mode)
-        print(f"Loaded memorty: {carl.crisis_mode}")
     return carl
 
 
 def save_carlbot(psid: str, carl: CarlBot):
-    print(f"Saving memorty: crisis mode {carl.crisis_mode}")
     cache.set(psid, (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
-    print("Memory saved!")
 
 
 @csrf_exempt
@@ -78,10 +73,8 @@ def webhook(request):
                     print("Received message: " + text)
 
                     carl = load_carlbot(psid)
-                    print("Carlbot loaded!")
                     carl.add_message(role="user", message=text)
                     reply = carl.get_response()
-                    print(reply)
                     carl.add_message(role="assistant", message=reply)
                     save_carlbot(psid, carl)
 
@@ -97,7 +90,6 @@ def post_payload(payload):
 
 def send_reply(psid, reply):
     print("Sending reply: " + reply)
-    print("(With quick replies)")
     payload = {
         'recipient': {
             'id': psid
