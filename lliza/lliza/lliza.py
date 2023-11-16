@@ -83,8 +83,8 @@ class CarlBot:
 
     def is_crisis(self, content:str) -> bool:
         response = client.moderations.create(input=content)
-        moderation_categories = response["results"][0]["categories"]
-        return any(moderation_categories[category] for category in
+        moderation_categories = response.results[0].categories
+        return any(getattr(moderation_categories,category) for category in
                    ["self-harm", "self-harm/intent", "self-harm/instructions"])
 
     def _add_message(self, role: str, content: str):
