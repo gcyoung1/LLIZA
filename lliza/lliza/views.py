@@ -71,7 +71,10 @@ def webhook(request):
                 else:
                     text = message['text']
                     print("Received message: " + text)
-
+                    if len(text) > 2100:
+                        reply = "[Message too long, not processed]"
+                        send_reply(psid, reply)
+                        continue
                     carl = load_carlbot(psid)
                     carl.add_message(role="user", message=text)
                     reply = carl.get_response()
