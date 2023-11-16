@@ -1,7 +1,9 @@
 import requests
 import os
 import urllib3
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 from typing import List, Dict
 
 urllib3.disable_warnings()
@@ -53,24 +55,20 @@ class CarlBot:
     def summarize_attitudes_in_dialogue(self, dialogue: List[Dict[str, str]], n_bullets: int) -> List[str]:
         dialogue_str = self.stringify_dialogue(dialogue)
         suffix = "\n- I feel"
-        response = openai.Completion.create(
-            model="gpt-3.5-turbo-instruct",
-            prompt=f"{dialogue_str}\nMake a bulletpoint list of the top {n_bullets} most important attitudes coming out in this interview:{suffix}",
-            max_tokens=200,  # 100 left unfinished bullets
-            temperature=0.0,
-        )
+        response = client.completions.create(model="gpt-3.5-turbo-instruct",
+        prompt=f"{dialogue_str}\nMake a bulletpoint list of the top {n_bullets} most important attitudes coming out in this interview:{suffix}",
+        max_tokens=200,  # 100 left unfinished bullets
+        temperature=0.0)
         summary = suffix + response.choices[0].text
         return summary.split("\n- ")[1:] # All but first empty string
     
     def summarize_attitudes(self, summary_points: List[str], n_bullets:int) -> List[str]:
         summary_str = self.stringify_summary(summary_points)
         suffix = "\n- I feel"
-        response = openai.Completion.create(
-            model="gpt-3.5-turbo-instruct",
-            prompt=f"{summary_str}\nCondense these attitudes to {n_bullets} bulletpoints:{suffix}",
-            max_tokens=200,  # 100 left unfinished bullets
-            temperature=0.0,
-        )
+        response = client.completions.create(model="gpt-3.5-turbo-instruct",
+        prompt=f"{summary_str}\nCondense these attitudes to {n_bullets} bulletpoints:{suffix}",
+        max_tokens=200,  # 100 left unfinished bullets
+        temperature=0.0)
         summary = suffix + response.choices[0].text
         return summary.split("\n- ")[1:] # All but first empty string
 
@@ -84,7 +82,7 @@ class CarlBot:
                 self.summary_buffer, n_bullets)
 
     def is_crisis(self, content:str) -> bool:
-        response = openai.Moderation.create(input=content, )
+        response = client.moderations.create(input=content)
         moderation_categories = response["results"][0]["categories"]
         return any(moderation_categories[category] for category in
                    ["self-harm", "self-harm/intent", "self-harm/instructions"])
@@ -118,9 +116,8 @@ class CarlBot:
     def get_response(self):
         if self.crisis_mode:
             return self.crisis_response
-        response = openai.ChatCompletion.create(
-            model="ft:gpt-3.5-turbo-1106:personal::8KJugs7V",
-            messages=self.messages)
+        response = client.chat.completions.create(model="ft:gpt-3.5-turbo-1106:personal::8KJugs7V",
+        messages=self.messages)
         return response.choices[0].message.content
 
     def load(self, dialogue_buffer, summary_buffer, crisis_mode):
