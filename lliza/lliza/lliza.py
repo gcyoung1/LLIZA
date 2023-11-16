@@ -2,7 +2,7 @@ import requests
 import os
 import urllib3
 import openai
-from typing import List
+from typing import List, Dict
 
 urllib3.disable_warnings()
 
@@ -10,11 +10,12 @@ urllib3.disable_warnings()
 class CarlBot:
 
     def __init__(self, base_system_prompt, max_n_dialogue_buffer_messages,
-                 max_global_summary_points):
+                 max_summary_buffer_points, max_user_message_chars=700):
         self.max_n_dialogue_buffer_messages = max_n_dialogue_buffer_messages
         self.min_n_dialogue_buffer_messages = 2
-        self.max_global_summary_points = max_global_summary_points
+        self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
+        self.max_user_message_chars = max_user_message_chars
 
         # Initialize memory
         self.all_summary_points = [
@@ -38,56 +39,77 @@ class CarlBot:
 
     @staticmethod
     def stringify_summary(summary: List[str]):
-        return "- " + "\n- ".join(summary)
+        return "\n- ".join([""] + summary)
 
     @property
     def system_prompt_message(self):
-        content = f"{self.base_system_prompt}\nContext:\n{self.summary_buffer_str}"
+        content = f"{self.base_system_prompt}\nPreviously Expressed Attitudes:\n{self.summary_buffer_str}"
         return {"role": "system", "content": content}
 
     @property
     def messages(self):
         return [self.system_prompt_message] + self.dialogue_buffer
 
-    def summarize_chunk(self, chunk: str):
+    def summarize_attitudes_in_dialogue(self, dialogue: List[Dict[str, str]], n_bullets: int) -> List[str]:
+        dialogue_str = self.stringify_dialogue(dialogue)
+        suffix = "\n- I feel"
         response = openai.Completion.create(
             model="gpt-3.5-turbo-instruct",
-            prompt=f"{chunk}\nTL;DR:\n- ",
+            prompt=f"{dialogue_str}\nMake a bulletpoint list of the top {n_bullets} most important attitudes coming out in this interview:{suffix}",
             max_tokens=200,  # 100 left unfinished bullets
             temperature=0.0,
         )
-        summary = "\n- " + response.choices[0].text
-        return summary.split("\n- ")[1:]
+        summary = suffix + response.choices[0].text
+        return summary.split("\n- ")[1:] # All but first empty string
+    
+    def summarize_attitudes(self, summary_points: List[str], n_bullets:int) -> List[str]:
+        summary_str = self.stringify_summary(summary_points)
+        suffix = "\n- I feel"
+        response = openai.Completion.create(
+            model="gpt-3.5-turbo-instruct",
+            prompt=f"{summary_str}\nCondense these attitudes to {n_bullets} bulletpoints:{suffix}",
+            max_tokens=200,  # 100 left unfinished bullets
+            temperature=0.0,
+        )
+        summary = suffix + response.choices[0].text
+        return summary.split("\n- ")[1:] # All but first empty string
 
     def update_summary(self):
-        chunk = self.stringify_dialogue(
-            self.dialogue_buffer[:-self.min_n_dialogue_buffer_messages])
-        bullets = self.summarize_chunk(chunk)
+        n_bullets = min(self.max_summary_buffer_points, max(2, self.max_summary_buffer_points // 3))
+        bullets = self.summarize_attitudes_in_dialogue(self.dialogue_buffer[:-self.min_n_dialogue_buffer_messages], n_bullets)
         self.all_summary_points.extend(bullets)
         self.summary_buffer.extend(bullets)
-        if len(self.summary_buffer) > self.max_global_summary_points:
-            self.summary_buffer = self.summarize_chunk(
-                self.stringify_summary(self.summary_buffer))
+        if len(self.summary_buffer) > self.max_summary_buffer_points:
+            self.summary_buffer = self.summarize_attitudes(
+                self.summary_buffer, n_bullets)
 
-    def is_crisis(self, message):
-        response = openai.Moderation.create(input=message, )
+    def is_crisis(self, content:str) -> bool:
+        response = openai.Moderation.create(input=content, )
         moderation_categories = response["results"][0]["categories"]
         return any(moderation_categories[category] for category in
                    ["self-harm", "self-harm/intent", "self-harm/instructions"])
 
-    def add_message(self, role, message):
-        if self.crisis_mode:
-            return
-        if role == "user" and self.is_crisis(message):
-            self.crisis_mode = True
-        message = {"role": role, "content": message}
+    def _add_message(self, role: str, content: str):
+        if role == "user" and self.is_crisis(content):
+            self.crisis_mode = True        
+        message = {"role": role, "content": content}
         self.full_dialogue.append(message)
         self.dialogue_buffer.append(message)
         if len(self.dialogue_buffer) > self.max_n_dialogue_buffer_messages:
-            print(self.stringify_dialogue(self.messages))
             self.update_summary()
             self.dialogue_buffer = self.dialogue_buffer[
                 -self.min_n_dialogue_buffer_messages:]
+
+    def split_content(self, content: str) -> List[str]:
+        if len(content) <= self.max_user_message_chars:
+            return [content]
+        split_point = content[:self.max_user_message_chars].rfind(" ")
+        return [content[:split_point]] + self.split_content(content[split_point + 1:])
+
+    def add_message(self, role: str, content: str):
+        # Split content into multiple messages if it's too long
+        for split_content in self.split_content(content):
+            self._add_message(role, split_content)
 
     @property
     def summary_buffer_str(self):

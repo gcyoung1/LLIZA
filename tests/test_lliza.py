@@ -8,7 +8,7 @@ from lliza.lliza import CarlBot
 def bot():
     return CarlBot("Test System Prompt",
                    max_n_dialogue_buffer_messages=4,
-                   max_global_summary_points=2)
+                   max_summary_buffer_points=2)
 
 
 @patch("lliza.lliza.openai")
@@ -36,23 +36,27 @@ def test_stringify_summary(bot):
 
 
 @patch("lliza.lliza.openai")
-def test_summarize_chunk(mock_openai, bot):
-    mock_openai.Completion.create.return_value.choices = [
-        MagicMock(text="Hello\n- World")
+def test_summarize_attitudes_in_dialogue(mock_openai, bot):
+    dialogue = [{'role': 'user', 'content': 'I feel bad'}, {'role': 'assistant', 'content': 'Why do you feel bad?'}]
+    completion_mock = mock_openai.Completion.create = MagicMock()
+    completion_mock.return_value.choices = [
+        MagicMock(text=" bad\n- I feel good")
     ]
-    bullets = bot.summarize_chunk("")
-    assert bullets == ["Hello", "World"]
+    bullets = bot.summarize_attitudes_in_dialogue(dialogue, 2)
+    assert bullets == ["I feel bad", "I feel good"]
+    assert mock_openai.Completion.create.call_count == 1
 
 
 # add_message
 def test_add_message_single_message(bot):
+    bot.is_crisis = MagicMock(return_value=False)
     bot.add_message("user", "Hello")
     assert len(bot.dialogue_buffer) == 1
     assert bot.dialogue_buffer[0]["role"] == "user"
     assert bot.dialogue_buffer[0]["content"] == "Hello"
 
-
 def test_add_message_max_messages(bot):
+    bot.is_crisis = MagicMock(return_value=False)
     max_n = bot.max_n_dialogue_buffer_messages
     min_n = bot.min_n_dialogue_buffer_messages
     bot.update_summary = MagicMock()
@@ -60,7 +64,6 @@ def test_add_message_max_messages(bot):
         bot.add_message("user", f"Message {i}")
     assert bot.update_summary.call_count == 1
     assert len(bot.dialogue_buffer) == min_n
-
 
 # update_summary
 def test_update_summary_no_recursive_summary(bot):
@@ -82,21 +85,20 @@ def test_update_summary_no_recursive_summary(bot):
         },
     ]
     bot.update_summary()
-    print(bot.stringify_dialogue.call_args_list)
     bot.stringify_dialogue.assert_called_once_with([{
         "role": "user",
         "content": "1"
     }])
     assert bot.all_summary_points == ["Bullet 1"]
     assert bot.summary_buffer == ["Bullet 1"]
-    bot.stringify_summary.assert_not_called
+    bot.summarize_attitudes.assert_not_called
 
 
 def test_update_summary_recursive_summary(bot):
     bot.stringify_dialogue = MagicMock()
-    bot.summarize_chunk = MagicMock(
+    bot.summarize_attitudes_in_dialogue = MagicMock(
         return_value=["Bullet 1", "Bullet 2", "Bullet 3"])
-    bot.stringify_summary = MagicMock()
+    bot.summarize_attitudes = MagicMock()
     bot.dialogue_buffer = [
         {
             "role": "user",
@@ -112,7 +114,7 @@ def test_update_summary_recursive_summary(bot):
         },
     ]
     bot.update_summary()
-    assert bot.summarize_chunk.call_count == 2
+    assert bot.summarize_attitudes.call_count == 1
 
 
 @pytest.mark.parametrize("crisis_message", [
