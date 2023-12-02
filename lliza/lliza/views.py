@@ -55,11 +55,19 @@ def webhook(request):
         print(request.headers.keys())
         print(request.headers)
         signature = request.headers["X-Hub-Signature-256"].split('=')[1]
+        print("signature")
         print(signature)
         payload = request.body
+        print("payload")
+        print(payload)
+        print("payload decoded")
+        print(payload.decode('utf-8'))
+        print("body")
+        print(json.loads(payload.decode('utf-8')))
 
         expected_signature = hmac.new(TOKEN.encode('utf-8'), payload.decode('utf-8'),
                                       hashlib.sha256).hexdigest()
+        print("expected_signature")
         print(expected_signature)
         print(request.META['HTTP_X_HUB_SIGNATURE'])
         if signature != expected_signature:
