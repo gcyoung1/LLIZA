@@ -52,7 +52,10 @@ def webhook(request):
 
     elif request.method == 'POST':
         # Validate payload
+        print(request.headers.keys())
+        print(request.headers)
         signature = request.headers["X-Hub-Signature-256"].split('=')[1]
+        print(signature)
         payload = request.body
         payload = payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
