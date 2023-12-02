@@ -110,7 +110,6 @@ def webhook(request):
 def post_payload(payload):
     url = f"https://graph.facebook.com/me/messages?access_token={PAGE_ACCESS_TOKEN}"  # Replace with actual API version and Page ID
     log_message(f"Posting payload to {url}")
-    import time; time.sleep(10)
     requests.post(url, json=payload)
 
 
