@@ -14,6 +14,13 @@ LATEST_API_VERSION = "v18.0"
 TOKEN = os.environ["TOKEN"]
 PAGE_ACCESS_TOKEN = os.environ["PAGE_ACCESS_TOKEN"]
 
+logging_enabled = True
+
+def log_message(message):
+    global logging_enabled
+    if logging_enabled:
+        print(message)
+
 def load_carlbot(psid: str):
     carl = CarlBot("You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.", 10, 10)
     if cache.get(psid) is not None:
@@ -56,6 +63,7 @@ def webhook(request):
             # Iterate through each entry as multiple entries can sometimes be batched
             for entry in entries:
                 if "messaging" not in entry:
+                    log_message("No messaging in entry")
                     continue
                 messaging = entry['messaging']
                 if len(messaging) > 1:
@@ -65,29 +73,38 @@ def webhook(request):
                 psid = messaging[0]['sender']['id']
                 message = messaging[0]['message']
                 if 'quick_reply' in message:
+                    log_message("Processing quick reply")
                     if message['quick_reply']['payload'] == "DELETE_DATA":
                         cache.delete(psid)
                         reply = "Session history deleted."
-                else:
+                else:                    
                     text = message['text']
                     print("Received message: " + text)
                     if len(text) > 2100:
-                        reply = "[Message too long, not processed]"
-                        send_reply(psid, reply)
-                        continue
-                    carl = load_carlbot(psid)
-                    carl.add_message(role="user", message=text)
-                    reply = carl.get_response()
-                    carl.add_message(role="assistant", message=reply)
-                    save_carlbot(psid, carl)
+                        log_message("Message too long")
+                        reply = "[Message too long, not processed. Please send a shorter message.]"
+                    else:
+                        log_message("Processing message")
+                        log_message("Loading CarlBot")
+                        carl = load_carlbot(psid)
+                        log_message("Adding message to CarlBot")
+                        carl.add_message(role="user", message=text)
+                        log_message("Getting CarlBot response")
+                        reply = carl.get_response()
+                        log_message("Registering CarlBot response")
+                        carl.add_message(role="assistant", message=reply)
+                        log_message("Saving CarlBot")
+                        save_carlbot(psid, carl)
 
+                log_message("Sending reply")
                 send_reply(psid, reply)
             return HttpResponse('WEBHOOK EVENT HANDLED', status=200)
         return HttpResponse('INVALID WEBHOOK EVENT', status=403)
 
 
-def post_payload(payload):
+def post_payload(payload):    
     url = f"https://graph.facebook.com/me/messages?access_token={PAGE_ACCESS_TOKEN}"  # Replace with actual API version and Page ID
+    log_message(f"Posting payload to {url}")
     requests.post(url, json=payload)
 
 
@@ -108,4 +125,5 @@ def send_reply(psid, reply):
         },
         'messaging_type': 'RESPONSE',
     }
+    log_message(f"Sending payload {payload}")
     post_payload(payload)
