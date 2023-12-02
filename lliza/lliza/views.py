@@ -53,7 +53,9 @@ def webhook(request):
     elif request.method == 'POST':
         # Validate payload
         signature = request.headers["X-Hub-Signature-256"].split('=')[1]
-        payload = request.get_data()
+        payload = request.body
+        payload = payload.decode('utf-8') if isinstance(payload, bytes) else payload
+
         expected_signature = hmac.new(TOKEN.encode('utf-8'), payload,
                                       hashlib.sha256).hexdigest()
 
