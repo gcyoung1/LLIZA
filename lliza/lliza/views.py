@@ -58,9 +58,10 @@ def webhook(request):
         print(signature)
         payload = request.body
 
-        expected_signature = hmac.new(TOKEN.encode('utf-8'), payload,
+        expected_signature = hmac.new(TOKEN.encode('utf-8'), payload.decode('utf-8'),
                                       hashlib.sha256).hexdigest()
         print(expected_signature)
+        print(request.META['HTTP_X_HUB_SIGNATURE'])
         if signature != expected_signature:
             print("Signature hash does not match")
             #return HttpResponse('INVALID SIGNATURE HASH', status=403)
