@@ -16,13 +16,17 @@ PAGE_ACCESS_TOKEN = os.environ["PAGE_ACCESS_TOKEN"]
 
 logging_enabled = True
 
+
 def log_message(message):
     global logging_enabled
     if logging_enabled:
         print(message)
 
+
 def load_carlbot(psid: str):
-    carl = CarlBot("You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.", 10, 10)
+    carl = CarlBot(
+        "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
+        10, 10)
     if cache.get(psid) is not None:
         dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
         carl.load(dialogue_buffer, summary_buffer, crisis_mode)
@@ -30,7 +34,8 @@ def load_carlbot(psid: str):
 
 
 def save_carlbot(psid: str, carl: CarlBot):
-    cache.set(psid, (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
+    cache.set(psid,
+              (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
 
 
 @csrf_exempt
@@ -77,7 +82,7 @@ def webhook(request):
                     if message['quick_reply']['payload'] == "DELETE_DATA":
                         cache.delete(psid)
                         reply = "Session history deleted."
-                else:                    
+                else:
                     text = message['text']
                     print("Received message: " + text)
                     if len(text) > 2100:
@@ -102,7 +107,7 @@ def webhook(request):
         return HttpResponse('INVALID WEBHOOK EVENT', status=403)
 
 
-def post_payload(payload):    
+def post_payload(payload):
     url = f"https://graph.facebook.com/me/messages?access_token={PAGE_ACCESS_TOKEN}"  # Replace with actual API version and Page ID
     log_message(f"Posting payload to {url}")
     requests.post(url, json=payload)
