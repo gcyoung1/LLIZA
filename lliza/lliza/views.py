@@ -93,11 +93,11 @@ def webhook(request):
                         log_message("Loading CarlBot")
                         carl = load_carlbot(psid)
                         log_message("Adding message to CarlBot")
-                        carl.add_message(role="user", message=text)
+                        carl.add_message(role="user", content=text)
                         log_message("Getting CarlBot response")
                         reply = carl.get_response()
                         log_message("Registering CarlBot response")
-                        carl.add_message(role="assistant", message=reply)
+                        carl.add_message(role="assistant", content=reply)
                         log_message("Saving CarlBot")
                         save_carlbot(psid, carl)
 
