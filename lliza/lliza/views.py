@@ -44,7 +44,16 @@ def get_hmac_string(secret, message):
         hashlib.sha256,
     ).hexdigest()
 
-@csrf_exempt
+def try_except_log(func):
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            log_message(e)
+
+    return wrapped
+
+@try_except_log
 @require_http_methods(["GET", "POST"])
 def webhook(request):
     # Webhook verification
