@@ -53,7 +53,6 @@ def try_except_log(func):
 
     return wrapped
 
-@try_except_log
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def webhook(request):
@@ -71,8 +70,10 @@ def webhook(request):
         print(request.headers)
         received_signature = request.headers["X-Hub-Signature-256"].split('=')[1]
         payload = request.body
-
-        expected_signature = get_hmac_string(TOKEN, payload)
+        try:
+            expected_signature = get_hmac_string(TOKEN, payload)
+        except Exception as e:
+            log_message(e)
 
         print(received_signature)
         print(expected_signature)
