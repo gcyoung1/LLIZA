@@ -37,6 +37,12 @@ def save_carlbot(psid: str, carl: CarlBot):
     cache.set(psid,
               (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
 
+def get_hmac_string(secret, message):
+    return hmac.new(
+        secret.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
@@ -52,27 +58,18 @@ def webhook(request):
 
     elif request.method == 'POST':
         # Validate payload
-        print(request.headers.keys())
         print(request.headers)
-        signature = request.headers["X-Hub-Signature-256"].split('=')[1]
-        print("signature")
-        print(signature)
+        received_signature = request.headers["X-Hub-Signature-256"].split('=')[1]
         payload = request.body
-        print("payload")
-        print(payload)
-        print("payload decoded")
-        print(payload.decode('utf-8'))
-        print("body")
-        print(json.loads(payload.decode('utf-8')))
 
-        expected_signature = hmac.new(TOKEN.encode('utf-8'), payload.decode('utf-8'),
-                                      hashlib.sha256).hexdigest()
-        print("expected_signature")
+        expected_signature = get_hmac_string(TOKEN, payload)
+
+        print(received_signature)
         print(expected_signature)
-        print(request.META['HTTP_X_HUB_SIGNATURE'])
-        if signature != expected_signature:
+        if not hmac.compare_digest(expected_signature, received_signature):
             print("Signature hash does not match")
-            #return HttpResponse('INVALID SIGNATURE HASH', status=403)
+            return HttpResponse('INVALID SIGNATURE HASH', status=403)
+        print("Signature hash matches")
 
         body = json.loads(payload.decode('utf-8'))
 
