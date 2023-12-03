@@ -40,7 +40,7 @@ def save_carlbot(psid: str, carl: CarlBot):
 def get_hmac_string(secret, message):
     return hmac.new(
         secret.encode("utf-8"),
-        message.encode("utf-8"),
+        message,
         hashlib.sha256,
     ).hexdigest()
 
