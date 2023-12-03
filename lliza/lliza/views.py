@@ -11,7 +11,8 @@ import os
 from lliza.lliza import CarlBot
 
 LATEST_API_VERSION = "v18.0"
-TOKEN = os.environ["TOKEN"]
+FB_VERIFY_TOKEN = os.environ["FB_VERIFY_TOKEN"]
+FB_APP_SECRET = os.environ["FB_APP_SECRET"]
 PAGE_ACCESS_TOKEN = os.environ["PAGE_ACCESS_TOKEN"]
 
 logging_enabled = True
@@ -44,15 +45,6 @@ def get_hmac_string(secret, message):
         hashlib.sha256,
     ).hexdigest()
 
-def try_except_log(func):
-    def wrapped(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            log_message(e)
-
-    return wrapped
-
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def webhook(request):
@@ -60,7 +52,7 @@ def webhook(request):
     if request.method == 'GET':
         if request.GET.get("hub.mode") == "subscribe" and request.GET.get(
                 "hub.challenge"):
-            if not request.GET.get("hub.verify_token") == TOKEN:
+            if not request.GET.get("hub.verify_token") == FB_VERIFY_TOKEN:
                 return HttpResponse("Verification token mismatch", status=403)
             print("WEBHOOK_VERIFIED")
             return HttpResponse(request.GET["hub.challenge"], status=200)
@@ -70,14 +62,13 @@ def webhook(request):
         print(request.headers)
         received_signature = request.headers["X-Hub-Signature-256"].split('=')[1]
         payload = request.body
-        expected_signature = get_hmac_string(TOKEN, payload)
+        expected_signature = get_hmac_string(FB_APP_SECRET, payload)
 
         print(received_signature)
         print(expected_signature)
         if not hmac.compare_digest(expected_signature, received_signature):
             print("Signature hash does not match")
             return HttpResponse('INVALID SIGNATURE HASH', status=403)
-        print("Signature hash matches")
 
         body = json.loads(payload.decode('utf-8'))
 
