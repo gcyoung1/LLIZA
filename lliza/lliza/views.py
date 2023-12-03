@@ -54,6 +54,7 @@ def try_except_log(func):
     return wrapped
 
 @try_except_log
+@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def webhook(request):
     # Webhook verification
