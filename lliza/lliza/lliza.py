@@ -16,7 +16,7 @@ class CarlBot:
                  max_summary_buffer_points,
                  max_user_message_chars=700):
         self.max_n_dialogue_buffer_messages = max_n_dialogue_buffer_messages
-        self.min_n_dialogue_buffer_messages = 2
+        self.min_n_dialogue_buffer_messages = 7
         self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
         self.max_user_message_chars = max_user_message_chars
@@ -130,7 +130,7 @@ class CarlBot:
         if self.crisis_mode:
             return self.crisis_response
         response = client.chat.completions.create(
-            model="ft:gpt-3.5-turbo-0613:personal:recipe-ner:7rdio4Q4",#"ft:gpt-3.5-turbo-1106:personal::8clAe08b"
+            model="ft:gpt-3.5-turbo-1106:personal::8lnmnimy"#12dialogues7min,#"ft:gpt-3.5-turbo-0613:personal:recipe-ner:7rdio4Q4"#og,#"ft:gpt-3.5-turbo-1106:personal::8clAe08b"#4_dialogues_2_min
             messages=self.messages)
         return response.choices[0].message.content
 
