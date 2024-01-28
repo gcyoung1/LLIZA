@@ -130,7 +130,7 @@ class CarlBot:
         if self.crisis_mode:
             return self.crisis_response
         response = client.chat.completions.create(
-            model="ft:gpt-3.5-turbo-1106:personal::8lnmnimy"#12dialogues7min,#"ft:gpt-3.5-turbo-0613:personal:recipe-ner:7rdio4Q4"#og,#"ft:gpt-3.5-turbo-1106:personal::8clAe08b"#4_dialogues_2_min
+            model="ft:gpt-3.5-turbo-1106:personal::8lnmnimy",#12dialogues7min,#"ft:gpt-3.5-turbo-0613:personal:recipe-ner:7rdio4Q4"#og,#"ft:gpt-3.5-turbo-1106:personal::8clAe08b"#4_dialogues_2_min
             messages=self.messages)
         return response.choices[0].message.content
 
