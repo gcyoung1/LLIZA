@@ -59,13 +59,10 @@ def webhook(request):
 
     elif request.method == 'POST':
         # Validate payload
-        print(request.headers)
         received_signature = request.headers["X-Hub-Signature-256"].split('=')[1]
         payload = request.body
         expected_signature = get_hmac_string(FB_APP_SECRET, payload)
 
-        print(received_signature)
-        print(expected_signature)
         if not hmac.compare_digest(expected_signature, received_signature):
             print("Signature hash does not match")
             return HttpResponse('INVALID SIGNATURE HASH', status=403)
