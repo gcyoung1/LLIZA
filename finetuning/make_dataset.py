@@ -20,7 +20,7 @@ def dialogues_to_examples(dialogues: List[List[Dict]]) -> List[List[Dict]]:
     examples = []
     for i, dialogue in enumerate(dialogues, start=1):
         print(f"Processing dialogue {i} of {len(dialogues)}")
-        max_n_dialogue_buffer_messages = random.randint(10, 21)
+        max_n_dialogue_buffer_messages = random.randint(14, 21)
         max_summary_buffer_points = random.randint(9, 15)
         carlbot = CarlBot(SYSTEM_PROMPT, max_n_dialogue_buffer_messages, max_summary_buffer_points)
         carlbot.is_crisis = lambda x: False
