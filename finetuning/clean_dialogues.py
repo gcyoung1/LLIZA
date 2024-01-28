@@ -56,7 +56,7 @@ def remove_parentheticals(dialogue:List[Dict[str, str]])->List[Dict[str, str]]:
         for match in matches:
             if any(word in match.lower() for word in ['lost', 'miss', 'inaud', 'illegib', 'unintelligib', 'fade']) or match == '(?)':
                 blank_counter += 1
-                message['content'] = message['content'].replace(match, f"$BLANK{blank_counter}")
+                message['content'] = message['content'].replace(match, f"$BLANK{blank_counter}", 1)
 
             elif "laugh" in match.lower():
                 laugh = random.choice(["haha", "heh", "hahaha", "hah"])
@@ -95,7 +95,7 @@ def fill_in_blanks(dialogue:List[Dict[str, str]])->None:
     for i, message in enumerate(dialogue):
         n_blanks = message['content'].count('$BLANK')
         for blank_num in range(1, n_blanks+1):
-            blank = guess_blank(dialogue[max(i-4, 0):i+2], True)
+            blank = guess_blank(dialogue[max(i-10, 0):i+4], True)
             message['content'] = message['content'].replace(f"$BLANK{blank_num}", blank)
 
 def remove_bracketed_text(dialogue:List[Dict[str, str]])->None:
@@ -116,15 +116,15 @@ def remove_ellipses(dialogue:List[Dict[str, str]])->None:
 
 def remove_extraneous_whitespace(dialogue:List[Dict[str, str]])->None:
     for message in dialogue:
-        message['content'] = re.sub(r'\t*', ' ', message['content'])
+        message['content'] = re.sub(r'\t+', ' ', message['content'])
         message['content'] = re.sub(r'\s{2,}', ' ', message['content'])
         message['content'] = message['content'].strip()
 
 ### argparse and main ###
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('input_dir', type=str, default='finetuning/raw_jsonl_dialogues', help='Directory containing raw jsonl dialogues')
-    parser.add_argument('output_dir', type=str, default='finetuning/cleaned_jsonl_dialogues', help='Directory to write cleaned transcripts to')
+    parser.add_argument('input_dir', type=str, default='finetuning/input_data/raw_jsonl_dialogues', help='Directory containing raw jsonl dialogues')
+    parser.add_argument('output_dir', type=str, default='finetuning/input_data/cleaned_jsonl_dialogues', help='Directory to write cleaned transcripts to')
     args = parser.parse_args()
     return args
 
