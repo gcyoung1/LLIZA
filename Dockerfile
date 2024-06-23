@@ -13,7 +13,7 @@ COPY . ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Add app to PYTHONPATH
-ENV PYTHONPATH lliza
+ENV PYTHONPATH=lliza
 
 # Add environment variables
 ARG DJANGO_SETTINGS_MODULE
@@ -29,6 +29,8 @@ ENV FB_VERIFY_TOKEN=$FB_VERIFY_TOKEN
 ENV OPENAI_API_KEY=$OPENAI_API_KEY
 ENV PAGE_ACCESS_TOKEN=$PAGE_ACCESS_TOKEN
 ENV PAGE_ID=$PAGE_ID
+
+RUN echo ${DJANGO_SETTINGS_MODULE}
 
 # Run the web service on container startup. Here we use the gunicorn
 # webserver, with one worker process and 8 threads.
