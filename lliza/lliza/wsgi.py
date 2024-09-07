@@ -11,4 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
+for k, v in os.environ.items(): 
+    print(f"{k}: {v}")
+
 application = get_wsgi_application()
