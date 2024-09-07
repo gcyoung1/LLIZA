@@ -139,5 +139,5 @@ def send_reply(psid, reply):
     log_message(f"Sending payload {payload}")
     post_payload(payload)
 
-def health_check(request):
+def health(request):
     return HttpResponse("Healthy", status=200)
