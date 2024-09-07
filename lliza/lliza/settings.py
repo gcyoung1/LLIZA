@@ -25,7 +25,7 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['polls-service-ijjp4culha-uc.a.run.app']
+ALLOWED_HOSTS = ['polls-service-ijjp4culha-uc.a.run.app', 'lliza-production.up.railway.app']
 
 # Application definition
 
