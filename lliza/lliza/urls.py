@@ -4,7 +4,7 @@ from lliza.views import webhook, health
 
 urlpatterns = [
     # ...
-    path('webhook/?', webhook, name='webhook'),
-    path('health/?', health, name='health'),
+    path('webhook', webhook, name='webhook'),
+    path('health', health, name='health'),
     # ...
 ]
