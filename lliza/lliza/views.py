@@ -54,7 +54,7 @@ def webhook(request):
                 "hub.challenge"):
             if not request.GET.get("hub.verify_token") == FB_VERIFY_TOKEN:
                 return HttpResponse("Verification token mismatch", status=403)
-            print("WEBHOOK_VERIFIED")
+            log_message("WEBHOOK_VERIFIED")
             return HttpResponse(request.GET["hub.challenge"], status=200)
 
     elif request.method == 'POST':
@@ -64,13 +64,16 @@ def webhook(request):
         expected_signature = get_hmac_string(FB_APP_SECRET, payload)
 
         if not hmac.compare_digest(expected_signature, received_signature):
-            print("Signature hash does not match")
+            log_message("Signature hash does not match")
             return HttpResponse('INVALID SIGNATURE HASH', status=403)
 
+        log_message("Signature hash matches")
         body = json.loads(payload.decode('utf-8'))
+        log_message(f"Received body: {body}")
 
         if 'object' in body and body['object'] == 'page':
             entries = body['entry']
+            log_message(f"Received entries: {entries}")
             # Iterate through each entry as multiple entries can sometimes be batched
             for entry in entries:
                 if "messaging" not in entry:
@@ -83,6 +86,7 @@ def webhook(request):
                     )
                 psid = messaging[0]['sender']['id']
                 message = messaging[0]['message']
+                log_message(f"Received message: {message}")
                 if 'quick_reply' in message:
                     log_message("Processing quick reply")
                     if message['quick_reply']['payload'] == "DELETE_DATA":
@@ -90,7 +94,7 @@ def webhook(request):
                         reply = "Session history deleted."
                 else:
                     text = message['text']
-                    print("Received message: " + text)
+                    log_message("Received message: " + text)
                     if len(text) > 2100:
                         log_message("Message too long")
                         reply = "[Message too long, not processed. Please send a shorter message.]"
@@ -120,7 +124,7 @@ def post_payload(payload):
 
 
 def send_reply(psid, reply):
-    print("Sending reply: " + reply)
+    log_message("Sending reply: " + reply)
     payload = {
         'recipient': {
             'id': psid
