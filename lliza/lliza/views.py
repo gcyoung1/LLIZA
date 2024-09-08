@@ -59,6 +59,7 @@ def webhook(request):
 
     elif request.method == 'POST':
         # Validate payload
+        print(f"Received headers: {request.headers}")
         received_signature = request.headers["X-Hub-Signature-256"].split('=')[1]
         payload = request.body
         expected_signature = get_hmac_string(FB_APP_SECRET, payload)
