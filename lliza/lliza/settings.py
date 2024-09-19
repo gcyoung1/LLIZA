@@ -49,7 +49,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "lliza.urls"
+ROOT_URLCONF = "lliza.twilio_urls"
 
 TEMPLATES = [
     {
