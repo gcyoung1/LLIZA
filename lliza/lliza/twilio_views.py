@@ -6,9 +6,14 @@ from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def webhook(request):
     """Send a dynamic reply to an incoming text message"""
+    # Print all the data from the incoming message
+    for key, value in request.POST.items():
+        print(f"{key}: {value}")
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
+    
 
+    print(f"Received message: {body}")
     # Start our TwiML response
     resp = MessagingResponse()
 
