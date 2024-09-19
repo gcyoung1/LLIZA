@@ -2,3 +2,4 @@ django
 openai
 gunicorn # for running the server
 requests # For responding to facebook (usued to be required by openai)
+twilio # For sending SMS
