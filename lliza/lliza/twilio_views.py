@@ -1,7 +1,9 @@
 from django.http import HttpResponse
 from twilio.twiml.messaging_response import MessagingResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 
+@csrf_exempt
 def webhook(request):
     """Send a dynamic reply to an incoming text message"""
     # Get the message the user sent our Twilio number
