@@ -4,3 +4,4 @@ gunicorn # for running the server
 requests # For responding to facebook (usued to be required by openai)
 twilio # For sending SMS
 psycopg2-binary # For connecting to postgres with Django
+dj-database-url # For connecting to postgres with Django
