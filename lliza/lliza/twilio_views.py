@@ -26,7 +26,13 @@ def load_carlbot(psid: str):
     return carl
 
 def save_carlbot(psid: str, carl: CarlBot):
-    User.objects.create(user_id=psid, memory_dict=carl.save_to_dict())
+    user_queryset = User.objects.filter(user_id__exact=psid)
+    if len(user_queryset) > 0:
+        user = user_queryset.first()
+        user.memory_dict = carl.save_to_dict()
+        user.save()
+    else:
+        User.objects.create(user_id=psid, memory_dict=carl.save_to_dict())
 
 @csrf_exempt
 def webhook(request):
