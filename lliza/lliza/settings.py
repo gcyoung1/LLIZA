@@ -78,7 +78,7 @@ DATABASES = {
         'NAME': os.environ["PGDATABASE"],
         'USER': os.environ["PGUSER"],
         'PASSWORD': os.environ["PGPASSWORD"],
-        'HOST': os.environ["PGHOST"],
+        'HOST': os.environ["DATABASE_PUBLIC_URL"],
         'PORT': os.environ["PGPORT"],
     }
 }
@@ -125,10 +125,3 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "TIMEOUT": 60 * 60 * 5,  # 5 hours
-    }
-}
