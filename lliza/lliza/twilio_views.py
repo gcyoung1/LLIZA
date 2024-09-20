@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.core.cache import cache
 from lliza.lliza import CarlBot
+from lliza.models import User
 
 logging_enabled = True
 
@@ -18,15 +19,14 @@ def load_carlbot(psid: str):
     carl = CarlBot(
         "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
         10, 10)
-    if cache.get(psid) is not None:
-        dialogue_buffer, summary_buffer, crisis_mode = cache.get(psid)
-        carl.load(dialogue_buffer, summary_buffer, crisis_mode)
+    user_queryset = User.objects.filter(user_id__exact=psid)
+    if len(user_queryset) > 0:
+        memory_dict = user_queryset.first().memory_dict
+        carl.load_from_dict(memory_dict)
     return carl
 
-
 def save_carlbot(psid: str, carl: CarlBot):
-    cache.set(psid,
-              (carl.dialogue_buffer, carl.summary_buffer, carl.crisis_mode))
+    User.objects.create(user_id=psid, memory_dict=carl.save_to_dict())
 
 @csrf_exempt
 def webhook(request):

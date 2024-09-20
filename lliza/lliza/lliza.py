@@ -139,6 +139,17 @@ class CarlBot:
         self.summary_buffer = summary_buffer
         self.crisis_mode = crisis_mode
 
+    def load_from_dict(self, memory_dict):
+        self.load(memory_dict['dialogue_buffer'], memory_dict['summary_buffer'],
+                  memory_dict['crisis_mode'])
+    
+    def save_to_dict(self):
+        return {
+            "dialogue_buffer": self.dialogue_buffer,
+            "summary_buffer": self.summary_buffer,
+            "crisis_mode": self.crisis_mode
+        }
+
 
 if __name__ == "__main__":
     carl = CarlBot(
