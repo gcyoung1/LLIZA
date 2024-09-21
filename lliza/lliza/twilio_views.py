@@ -43,9 +43,12 @@ def webhook(request):
     body = request.POST.get('Body', None)
     psid = from_number
     text = body
+    blank_carl = CarlBot(
+        "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
+        10, 10)
     user_queryset = User.objects.filter(user_id__exact=psid)
     if not user_queryset.exists():
-        user = User.objects.create(user_id=psid, memory_dict={})
+        user = User.objects.create(user_id=psid, memory_dict=blank_carl.save_to_dict())
     else:
         user = user_queryset.first()
 
@@ -72,7 +75,7 @@ def webhook(request):
         reply = "[Message too long, not processed. Please send a shorter message.]"
     elif text.lower() == DELETE_KEYWORD.lower():
         log_message("Deleting conversation history")
-        user.memory_dict = {}
+        user.memory_dict = blank_carl.save_to_dict()
         user.save()
         reply = DELETE_MESSAGE
     else:
