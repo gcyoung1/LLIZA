@@ -45,6 +45,9 @@ def webhook(request):
 
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
+    psid = from_number
+    text = body
+
 
     if 'OptOutType' in request.POST:
         # I set up Advanced Opt-Out in Twilio, so we don't need to reply to these messages
@@ -54,8 +57,6 @@ def webhook(request):
             User.objects.filter(user_id__exact=psid).delete()
         return HttpResponse(status=200)
     
-    psid = from_number
-    text = body
 
     if len(text) > 2100:
         log_message("Message too long")
