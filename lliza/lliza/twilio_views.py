@@ -9,6 +9,9 @@ from lliza.models import User
 
 logging_enabled = True
 
+OPT_OUT_KEYWORD = "STOP"
+DELETE_MESSAGE = "Your conversation history has been deleted from our servers."
+DELETE_KEYWORD = "DELETE"
 
 def log_message(message):
     global logging_enabled
@@ -20,14 +23,14 @@ def load_carlbot(psid: str):
         "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
         10, 10)
     user_queryset = User.objects.filter(user_id__exact=psid)
-    if len(user_queryset) > 0:
+    if user_queryset.exists():
         memory_dict = user_queryset.first().memory_dict
         carl.load_from_dict(memory_dict)
     return carl
 
 def save_carlbot(psid: str, carl: CarlBot):
     user_queryset = User.objects.filter(user_id__exact=psid)
-    if len(user_queryset) > 0:
+    if user_queryset.exists():
         user = user_queryset.first()
         user.memory_dict = carl.save_to_dict()
         user.save()
@@ -42,12 +45,26 @@ def webhook(request):
 
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
+
+    if 'OptOutType' in request.POST:
+        # I set up Advanced Opt-Out in Twilio, so we don't need to reply to these messages
+        # We just need to delete the user from our database if they opt out
+        if text.lower() == OPT_OUT_KEYWORD.lower():
+            log_message("Opting out")
+            User.objects.filter(user_id__exact=psid).delete()
+        return HttpResponse(status=200)
     
     psid = from_number
     text = body
+
     if len(text) > 2100:
         log_message("Message too long")
         reply = "[Message too long, not processed. Please send a shorter message.]"
+    elif text.lower() == DELETE_KEYWORD.lower():
+        log_message("Deleting conversation history")
+        if User.objects.filter(user_id__exact=psid).exists():
+            User.objects.filter(user_id__exact=psid).delete()
+        reply = DELETE_MESSAGE
     else:
         log_message("Processing message")
         log_message("Loading CarlBot")
@@ -62,7 +79,8 @@ def webhook(request):
         save_carlbot(psid, carl)
 
 
-    print(f"Received message: {body}")
+    log_message(f"Received message: {body}")
+    log_message(f"Sending reply: {reply}")
     # Start our TwiML response
     resp = MessagingResponse()
     resp.message(reply)
@@ -73,6 +91,3 @@ def webhook(request):
 def health(request):
     return HttpResponse("Healthy", status=200)
 
-opt_in_message = "Thank you for messaging LLiza, a therapy bot. You are now opted in to receive replies from our service in the style of client-centered therapist Carl Rogers. Reply HELP for assistance, STOP to unsubscribe, or DELETE to remove your conversation history from our servers. Message/data rates may apply."
-opt_out_message = "You have successfully been unsubscribed. You will not receive any more messages from this number. Reply START to resubscribe."
-help_message = "Reply STOP to unsubscribe. Reply DELETE to remove your conversation history from our servers. Reply START to resubscribe. Msg&Data Rates May Apply."
