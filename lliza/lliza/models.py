@@ -10,3 +10,4 @@ class User(models.Model):
     """
     user_id = models.CharField(max_length=255)
     memory_dict = models.JSONField()
+    opt_out = models.BooleanField(default=False)

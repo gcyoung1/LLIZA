@@ -10,6 +10,7 @@ from lliza.models import User
 logging_enabled = True
 
 OPT_OUT_KEYWORD = "STOP"
+OPT_IN_KEYWORD = "START"
 DELETE_MESSAGE = "Your conversation history has been deleted from our servers."
 DELETE_KEYWORD = "DELETE"
 
@@ -22,20 +23,15 @@ def load_carlbot(psid: str):
     carl = CarlBot(
         "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
         10, 10)
-    user_queryset = User.objects.filter(user_id__exact=psid)
-    if user_queryset.exists():
-        memory_dict = user_queryset.first().memory_dict
-        carl.load_from_dict(memory_dict)
+    user = User.objects.filter(user_id__exact=psid).first()
+    memory_dict = user.memory_dict
+    carl.load_from_dict(memory_dict)
     return carl
 
 def save_carlbot(psid: str, carl: CarlBot):
-    user_queryset = User.objects.filter(user_id__exact=psid)
-    if user_queryset.exists():
-        user = user_queryset.first()
-        user.memory_dict = carl.save_to_dict()
-        user.save()
-    else:
-        User.objects.create(user_id=psid, memory_dict=carl.save_to_dict())
+    user = User.objects.filter(user_id__exact=psid).first()
+    user.memory_dict = carl.save_to_dict()
+    user.save()
 
 @csrf_exempt
 def webhook(request):
@@ -47,24 +43,37 @@ def webhook(request):
     body = request.POST.get('Body', None)
     psid = from_number
     text = body
-
+    user_queryset = User.objects.filter(user_id__exact=psid)
+    if not user_queryset.exists():
+        user = User.objects.create(user_id=psid, memory_dict={})
+    else:
+        user = user_queryset.first()
 
     if 'OptOutType' in request.POST:
         # I set up Advanced Opt-Out in Twilio, so we don't need to reply to these messages
         # We just need to delete the user from our database if they opt out
         if text.lower() == OPT_OUT_KEYWORD.lower():
             log_message("Opting out")
-            User.objects.filter(user_id__exact=psid).delete()
+            user.opt_out = True
+            user.memory_dict = {}
+            user.save()
+        elif text.lower() == OPT_IN_KEYWORD.lower():
+            log_message("Resubscribing")
+            user.opt_out = False
+            user.save()
         return HttpResponse(status=200)
     
-
+    if user.opt_out:
+        log_message("User opted out")
+        return HttpResponse(status=200)
+    
     if len(text) > 2100:
         log_message("Message too long")
         reply = "[Message too long, not processed. Please send a shorter message.]"
     elif text.lower() == DELETE_KEYWORD.lower():
         log_message("Deleting conversation history")
-        if User.objects.filter(user_id__exact=psid).exists():
-            User.objects.filter(user_id__exact=psid).delete()
+        user.memory_dict = {}
+        user.save()
         reply = DELETE_MESSAGE
     else:
         log_message("Processing message")
