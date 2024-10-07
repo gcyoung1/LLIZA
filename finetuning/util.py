@@ -2,12 +2,16 @@ import json
 from typing import List, Dict
 import tiktoken
 
-def write_dialogues_to_jsonl(dialogues: List[Dict], filename: str) -> None:
+def write_jsonl(data: List[Dict], filename: str) -> None:
     with open(filename, mode='w', encoding='utf8') as f:
-        for dialogue in dialogues:
-            jout = json.dumps({'messages': dialogue}, ensure_ascii=False)
+        for d in data:
+            jout = json.dumps(d, ensure_ascii=False)
             f.write(jout)
             f.write('\n')
+
+def write_dialogues_to_jsonl(dialogues: List[Dict], filename: str) -> None:
+    jsons = [{'messages': dialogue} for dialogue in dialogues]
+    write_jsonl(jsons, filename)
 
 def read_dialogues_from_jsonl(jsonl_file: str):
     with open(jsonl_file, 'r', encoding='utf8') as f:

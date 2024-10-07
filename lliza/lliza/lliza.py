@@ -20,6 +20,8 @@ class CarlBot:
         self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
         self.max_user_message_chars = max_user_message_chars
+        self.summarizer_model = "gpt-4o-mini-2024-07-18"
+        self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:36-dialogues:AFaeGlCi"
 
         # Initialize memory
         self.all_summary_points = [
@@ -57,28 +59,26 @@ class CarlBot:
     def summarize_attitudes_in_dialogue(self, dialogue: List[Dict[str, str]],
                                         n_bullets: int) -> List[str]:
         dialogue_str = self.stringify_dialogue(dialogue)
-        suffix = "\n- I feel"
-        response = client.completions.create(
-            model="gpt-3.5-turbo-instruct",
-            prompt=
-            f"{dialogue_str}\nMake a bulletpoint list of the top {n_bullets} most important attitudes coming out in this interview:{suffix}",
+        completion = client.chat.completions.create(
+            model=self.summarizer_model,
+            messages=[{"role": "user", "content": f"{dialogue_str}\n###\nMake a bulletpoint list of the top {n_bullets} most important attitudes coming out in this interview. Do not say anything first, just reply with the bullet points. Use first person."}],
             max_tokens=200,  # 100 left unfinished bullets
             temperature=0.0)
-        summary = suffix + response.choices[0].text
-        return summary.split("\n- ")[1:]  # All but first empty string
-
+        summary = "\n" + completion.choices[0].message.content
+        bullets = summary.split("\n- ")[1:] # All but first empty string
+        return bullets
+    
     def summarize_attitudes(self, summary_points: List[str],
                             n_bullets: int) -> List[str]:
         summary_str = self.stringify_summary(summary_points)
-        suffix = "\n- I feel"
-        response = client.completions.create(
-            model="gpt-3.5-turbo-instruct",
-            prompt=
-            f"{summary_str}\nCondense these attitudes to {n_bullets} bulletpoints:{suffix}",
+        completion = client.chat.completions.create(
+            model=self.summarizer_model,
+            messages=[{"role": "user", "content": f"{summary_str}\n###\nCondense these attitudes to {n_bullets} bulletpoints. Do not say anything first, just reply with the bullet points. Use first person."}],            
             max_tokens=200,  # 100 left unfinished bullets
             temperature=0.0)
-        summary = suffix + response.choices[0].text
-        return summary.split("\n- ")[1:]  # All but first empty string
+        summary = "\n" + completion.choices[0].message.content
+        bullets = summary.split("\n- ")[1:] # All but first empty string
+        return bullets
 
     def update_summary(self):
         n_bullets = min(self.max_summary_buffer_points,
@@ -130,7 +130,7 @@ class CarlBot:
         if self.crisis_mode:
             return self.crisis_response
         response = client.chat.completions.create(
-            model="ft:gpt-4o-mini-2024-07-18:personal:12-dialogues:AF3vzlbv:ckpt-step-471",
+            model=self.chat_model,
             messages=self.messages)
         return response.choices[0].message.content
 
