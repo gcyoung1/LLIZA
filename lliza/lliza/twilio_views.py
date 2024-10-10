@@ -1,6 +1,5 @@
 import os
-import hmac
-import hashlib
+import cryptocode
 import json
 
 from django.http import HttpResponse
@@ -52,25 +51,11 @@ to remove your conversation history from our servers.
 """
 WELCOME_MESSAGE = f"{HELP_MESSAGE}\nAnd now Lliza can say hello:\n{FIRST_SESSION_MESSAGE}"
 
-def encrypt_string(secret, message):
-    return hmac.new(
-        secret.encode("utf-8"),
-        message,
-        hashlib.sha256,
-    ).hexdigest()
-
-def decrypt_string(secret, message):
-    return hmac.new(
-        secret.encode("utf-8"),
-        message,
-        hashlib.sha256,
-    ).hexdigest()
-
 def dict_to_encrypted_string(secret, dictionary):
-    return encrypt_string(secret, json.dumps(dictionary))
+    return cryptocode.encrypt(json.dumps(dictionary), secret)
 
 def encrypted_string_to_dict(secret, encrypted_string):
-    return json.loads(decrypt_string(secret, encrypted_string))
+    return json.loads(cryptocode.decrypt(encrypted_string), secret)
 
 def log_message(message):
     global logging_enabled
