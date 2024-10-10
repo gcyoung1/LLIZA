@@ -56,7 +56,7 @@ def dict_to_encrypted_string(secret, dictionary):
     return cryptocode.encrypt(json.dumps(dictionary), secret)
 
 def encrypted_string_to_dict(secret, encrypted_string):
-    return json.loads(cryptocode.decrypt(encrypted_string), secret)
+    return json.loads(cryptocode.decrypt(encrypted_string, secret))
 
 def log_message(message):
     global logging_enabled
