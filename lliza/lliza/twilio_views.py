@@ -1,6 +1,7 @@
 import os
 import cryptocode
 import json
+import hashlib
 
 from django.http import HttpResponse
 from twilio.twiml.messaging_response import MessagingResponse
@@ -87,7 +88,7 @@ def webhook(request):
 
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
-    psid = cryptocode.encrypt(from_number, ENCRYPTION_KEY)
+    psid = hashlib.sha256(from_number.encode()).hexdigest()
     text = body
     blank_carl = CarlBot(
         SYSTEM_PROMPT,
