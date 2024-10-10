@@ -9,10 +9,41 @@ from lliza.models import User
 
 logging_enabled = True
 
+SYSTEM_PROMPT = "You are LLiza, a Rogerian therapist. Your mission is to embody congruence (transparency about your own feelings and reactions), unconditional positive regard (a strong sense of caring for the client), and empathetic understanding (understand the client's frame of reference well enough to sense deeper meanings underneath the surface) so therapeutic movement occurs in your client.\nSpecifically, she'll explore her feelings more deeply, discover hidden aspects of herself, prize herself more, understand her own meanings better, be more real with herself, feel what's going on inside more clearly, relate more directly, see life less rigidly, accept herself, and recognize her own judgment capacity.\nStart by asking what the client wants to talk about. Don't give advice, direct the client, ask questions, interpret, bring in outside opinions, merely repeat facts, summarize all of what they said, or use long sentences. Allow the client to lead the session and discover their own answers while you understand their inner world, reflect their most important emotions succinctly, and be transparent with your reactions.\nExample 1:\n###\nClient: I would like to be more present and comfortable with myself so that other people, including my children and so forth, could do what they do, and that I could be a source of support and not be personally threatened  by every little thing. \nYou: And that has meaning to me. You'd like to be sufficiently accepting of yourself, that then you can be comfortable with what your children do or what other people do and not feel frightened, thrown off balance. \n###\nExample 2:\n###\nClient: I plan to go to work in the fall, and I believe that deep down I'm really afraid. \nYou: Are you afraid of the responsibility or, or what aspect of it is most frightening?\n###\n"
 OPT_OUT_KEYWORD = "STOP"
 OPT_IN_KEYWORD = "START"
 DELETE_MESSAGE = "Your conversation history has been deleted from our servers."
 DELETE_KEYWORD = "DELETE"
+FIRST_SESSION_MESSAGE = "I'm looking forward to knowing you and whatever you'd like to talk about I'm very ready to listen to."
+HELP_KEYWORD = "HELP"
+HELP_MESSAGE = """
+Thanks for messaging Lliza, a therapy bot trained to speak like \
+the Client-Centered Therapist Carl Rogers.
+
+Lliza is here to listen. She won't give advice or direct you, \
+but she'll help you clarify your thoughts and feelings and find your own answers. \
+Lliza does best when you give her a lot to work with -- it's up to you to lead \
+the conversation. Lliza was trained on transcripts of in-person therapy sessions, \
+so it might be helpful to use speech-to-text and just talk.
+
+Lliza is not equipped to handle crises or provide emergency support \
+- if you're in crisis, please call the National Suicide Prevention Lifeline \
+at the phone number 988.
+
+FAQ:
+Who made this?
+It was developed by Griffin Young (https://www.linkedin.com/in/gcyoung1) \
+-- to give feedback, email griffinwhy@gmail.com.
+Where are my messages stored?
+Conversation history is encrypted and stored solely so that \
+Lliza can remember what the conversation is about. \
+It will never be used to train models and no humans will read it. \
+You can delete it at any time by texting DELETE.
+
+Reply HELP to see this message again, STOP to unsubscribe, or DELETE \
+to remove your conversation history from our servers.
+"""
+WELCOME_MESSAGE = f"{HELP_MESSAGE}\nAnd now Lliza can say hello:\n{FIRST_SESSION_MESSAGE}"
 
 def log_message(message):
     global logging_enabled
@@ -21,7 +52,7 @@ def log_message(message):
 
 def load_carlbot(psid: str):
     carl = CarlBot(
-        "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
+        SYSTEM_PROMPT,
         10, 10)
     user = User.objects.filter(user_id__exact=psid).first()
     memory_dict = user.memory_dict
@@ -44,11 +75,14 @@ def webhook(request):
     psid = from_number
     text = body
     blank_carl = CarlBot(
-        "You're AI Rogerian therapist LLIZA texting a client. Be accepting, empathetic, and genuine. Don't direct or advise.",
+        SYSTEM_PROMPT,
         10, 10)
+    blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE)
     user_queryset = User.objects.filter(user_id__exact=psid)
+    new_user = False
     if not user_queryset.exists():
         user = User.objects.create(user_id=psid, memory_dict=blank_carl.save_to_dict())
+        new_user = True
     else:
         user = user_queryset.first()
 
@@ -60,36 +94,38 @@ def webhook(request):
             user.opt_out = True
             user.memory_dict = {}
             user.save()
+            log_message("User opted out")
+            return HttpResponse(status=200)
         elif text.lower() == OPT_IN_KEYWORD.lower():
             log_message("Resubscribing")
             user.opt_out = False
             user.save()
-        return HttpResponse(status=200)
     
-    if user.opt_out:
-        log_message("User opted out")
-        return HttpResponse(status=200)
-    
-    if len(text) > 2100:
-        log_message("Message too long")
-        reply = "[Message too long, not processed. Please send a shorter message.]"
-    elif text.lower() == DELETE_KEYWORD.lower():
+    if text.lower() == DELETE_KEYWORD.lower():
         log_message("Deleting conversation history")
         user.memory_dict = blank_carl.save_to_dict()
         user.save()
         reply = DELETE_MESSAGE
+    elif text.lower() == HELP_KEYWORD.lower():
+        reply = HELP_MESSAGE
+    elif new_user or (text.lower() == OPT_IN_KEYWORD.lower()):
+        reply = FIRST_SESSION_MESSAGE
     else:
-        log_message("Processing message")
-        log_message("Loading CarlBot")
-        carl = load_carlbot(psid)
-        log_message("Adding message to CarlBot")
-        carl.add_message(role="user", content=text)
-        log_message("Getting CarlBot response")
-        reply = carl.get_response()
-        log_message("Registering CarlBot response")
-        carl.add_message(role="assistant", content=reply)
-        log_message("Saving CarlBot")
-        save_carlbot(psid, carl)
+        if len(text) > 2100:
+            log_message("Message too long")
+            reply = "[Message too long, not processed. Please send a shorter message.]"
+        else:
+            log_message("Processing message")
+            log_message("Loading CarlBot")
+            carl = load_carlbot(psid)
+            log_message("Adding message to CarlBot")
+            carl.add_message(role="user", content=text)
+            log_message("Getting CarlBot response")
+            reply = carl.get_response()
+            log_message("Registering CarlBot response")
+            carl.add_message(role="assistant", content=reply)
+            log_message("Saving CarlBot")
+            save_carlbot(psid, carl)
 
 
     log_message(f"Received message: {body}")
