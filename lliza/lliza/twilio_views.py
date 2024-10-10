@@ -109,7 +109,7 @@ def webhook(request):
     elif text.lower() == HELP_KEYWORD.lower():
         reply = HELP_MESSAGE
     elif new_user or (text.lower() == OPT_IN_KEYWORD.lower()):
-        reply = FIRST_SESSION_MESSAGE
+        reply = WELCOME_MESSAGE
     else:
         if len(text) > 2100:
             log_message("Message too long")
