@@ -54,13 +54,18 @@ def main():
     # Shuffle all dialogues and split into train, test, and eval
     random.shuffle(all_dialogues)
     dialogues_to_use = all_dialogues[:args.n_dialogues]
-    train_dialogues = dialogues_to_use[:int(len(dialogues_to_use) * 0.9)]
-    test_dialogues = dialogues_to_use[int(len(dialogues_to_use) * 0.9):]
+    train_dialogues = dialogues_to_use[:int(len(dialogues_to_use) * 0.95)]
+    test_dialogues = dialogues_to_use[int(len(dialogues_to_use) * 0.95):]
 
     train_examples = dialogues_to_examples(train_dialogues)
-    test_examples = dialogues_to_examples(test_dialogues)
+    # Shuffle and split into chunks of 1500
+    random.shuffle(train_examples)
+    chunk_size = 1500
+    for i in range(0, len(train_examples), chunk_size):
+        chunk = train_examples[i:i + chunk_size]
+        util.write_dialogues_to_jsonl(chunk, os.path.join(args.output_dir, f'train_dataset_{i}.jsonl'))
 
-    util.write_dialogues_to_jsonl(train_examples, os.path.join(args.output_dir, 'train_dataset.jsonl'))
+    test_examples = dialogues_to_examples(test_dialogues)
     util.write_dialogues_to_jsonl(test_examples, os.path.join(args.output_dir, 'test_dataset.jsonl'))
     
     # Make eval jsonl by taking the last message of each dialogue and adding it to a new field called 'ideal'
