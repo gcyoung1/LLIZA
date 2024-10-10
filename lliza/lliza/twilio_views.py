@@ -87,7 +87,7 @@ def webhook(request):
 
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
-    psid = encrypt_string(ENCRYPTION_KEY, from_number)
+    psid = cryptocode.encrypt(from_number, ENCRYPTION_KEY)
     text = body
     blank_carl = CarlBot(
         SYSTEM_PROMPT,
