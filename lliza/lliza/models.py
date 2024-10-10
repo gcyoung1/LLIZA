@@ -9,5 +9,5 @@ class User(models.Model):
     - settings: JSONField - General settings of the pipeline.
     """
     user_id = models.CharField(max_length=255)
-    memory_dict = models.JSONField()
+    encrypted_memory_dict_string = models.TextField(null=True)
     opt_out = models.BooleanField(default=False)
