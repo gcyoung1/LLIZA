@@ -131,7 +131,9 @@ class CarlBot:
             return self.crisis_response
         response = client.chat.completions.create(
             model=self.chat_model,
-            messages=self.messages)
+            messages=self.messages,
+            temperature=0.1
+            )
         return response.choices[0].message.content
 
     def load(self, dialogue_buffer, summary_buffer, crisis_mode):
