@@ -11,3 +11,5 @@ class User(models.Model):
     user_id = models.CharField(max_length=255)
     encrypted_memory_dict_string = models.TextField(null=True)
     opt_out = models.BooleanField(default=False)
+    last_message_time = models.DateTimeField(auto_now=True)
+    num_messages = models.IntegerField(default=0)
