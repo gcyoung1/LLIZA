@@ -149,6 +149,7 @@ def webhook(request):
             log_message("Saving CarlBot")
             save_carlbot(psid, carl)
             user.num_messages += 1
+            user.save()
 
 
     log_message(f"Received message: {body}")
