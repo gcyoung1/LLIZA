@@ -132,7 +132,7 @@ class CarlBot:
         response = client.chat.completions.create(
             model=self.chat_model,
             messages=self.messages,
-            temperature=0.1
+            temperature=0.4
             )
         return response.choices[0].message.content
 
