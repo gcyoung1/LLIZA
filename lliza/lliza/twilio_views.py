@@ -2,15 +2,17 @@ import os
 import cryptocode
 import json
 import hashlib
+import time
 
 from django.http import HttpResponse
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.rest import Client
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 
-from django.core.cache import cache
 from lliza.lliza import CarlBot
 from lliza.models import User
+
 
 
 logging_enabled = False
@@ -79,6 +81,27 @@ def save_carlbot(psid: str, carl: CarlBot):
     encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
     user.encrypted_memory_dict_string = encrypted_memory_dict_string
     user.save()
+
+def load_client():
+    return Client(
+        os.environ.get("TWILIO_ACCOUNT_SID"),
+        os.environ.get("TWILIO_AUTH_TOKEN")
+    )
+
+def send_message(to, body):
+    """
+    Send a message using the Twilio API
+
+    :param to: Number to send the message to
+    :param body: Body of the message
+    """
+    client = load_client()
+
+    client.messages.create(
+        messaging_service_sid=os.environ.get("TWILIO_MESSAGING_SERVICE_SID"),
+        to=to,
+        body=body
+    )
 
 @csrf_exempt
 def webhook(request):
@@ -160,7 +183,23 @@ def webhook(request):
 
     return HttpResponse(str(resp), content_type='application/xml')
 
+@csrf_exempt  # Disable CSRF for this webhook endpoint
+@require_http_methods(["POST"])
+def message_status(request):
+    message_sid = request.POST.get('MessageSid', None)
+    message_status = request.POST.get('MessageStatus', None)
+
+    # Check if the message is undelivered, and if so, resend it
+    if message_status == 'undelivered':
+        time.sleep(5)
+        client = load_client()
+        message = client.messages(message_sid).fetch()
+        send_message(message.to, message.body)
+
+    return HttpResponse(status=204)
+
 @require_http_methods(["GET"])
 def health(request):
     return HttpResponse("Healthy", status=200)
+
 
