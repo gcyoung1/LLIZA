@@ -180,7 +180,7 @@ def webhook(request):
     # Start our TwiML response
     resp = MessagingResponse()
     resp.message(body=reply,
-                 status_callback=os.environ.get('RAILWAY_PUBLIC_DOMAIN') + '/message-status')
+                 status_callback='message-status')
 
     return HttpResponse(str(resp), content_type='application/xml')
 
