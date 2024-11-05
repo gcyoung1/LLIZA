@@ -188,6 +188,7 @@ def webhook(request):
 def message_status(request):
     message_sid = request.POST.get('MessageSid', None)
     message_status = request.POST.get('MessageStatus', None)
+    print(f"Message status: {message_status} for message SID: {message_sid}")
 
     # Check if the message is undelivered, and if so, resend it
     if message_status == 'undelivered':
