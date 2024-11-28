@@ -11,17 +11,18 @@ SYSTEM_PROMPT = "You are LLiza, a Rogerian therapist. Your mission is to embody 
 class CarlBot:
 
     def __init__(self,
-                 base_system_prompt,
-                 max_n_dialogue_buffer_messages,
-                 max_summary_buffer_points,
+                 base_system_prompt=SYSTEM_PROMPT,
+                 min_n_dialogue_buffer_messages=25,
+                 max_n_dialogue_buffer_messages=50,
+                 max_summary_buffer_points=20,
                  max_user_message_chars=700):
         self.max_n_dialogue_buffer_messages = max_n_dialogue_buffer_messages
-        self.min_n_dialogue_buffer_messages = 7
+        self.min_n_dialogue_buffer_messages = min_n_dialogue_buffer_messages
         self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
         self.max_user_message_chars = max_user_message_chars
         self.summarizer_model = "gpt-4o-mini-2024-07-18"
-        self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:148-dialogues-1500:AFwzSCDJ"
+        self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:110-dialogues-25-min-1500:AYedQAat" #"ft:gpt-4o-mini-2024-07-18:personal:148-dialogues-1500:AFwzSCDJ"
 
         # Initialize memory
         self.all_summary_points = [
@@ -61,7 +62,7 @@ class CarlBot:
         dialogue_str = self.stringify_dialogue(dialogue)
         completion = client.chat.completions.create(
             model=self.summarizer_model,
-            messages=[{"role": "user", "content": f"{dialogue_str}\n###\nMake a bulletpoint list of the top {n_bullets} most important attitudes coming out in this interview. Do not say anything first, just reply with the bullet points. Use first person."}],
+            messages=[{"role": "user", "content": f"{dialogue_str}\n###\nMake a bulletpoint list of the most important attitudes (at most {n_bullets} bullets) coming out in this interview. Do not say anything first, just reply with the bullet points. Use first person."}],
             max_tokens=200,  # 100 left unfinished bullets
             temperature=0.0)
         summary = "\n" + completion.choices[0].message.content
@@ -73,7 +74,7 @@ class CarlBot:
         summary_str = self.stringify_summary(summary_points)
         completion = client.chat.completions.create(
             model=self.summarizer_model,
-            messages=[{"role": "user", "content": f"{summary_str}\n###\nCondense these attitudes to {n_bullets} bulletpoints. Do not say anything first, just reply with the bullet points. Use first person."}],            
+            messages=[{"role": "user", "content": f"{summary_str}\n###\nCondense these attitudes to at most {n_bullets} bulletpoints. Do not say anything first, just reply with the bullet points. Use first person."}],            
             max_tokens=200,  # 100 left unfinished bullets
             temperature=0.0)
         summary = "\n" + completion.choices[0].message.content
@@ -154,9 +155,7 @@ class CarlBot:
 
 
 if __name__ == "__main__":
-    carl = CarlBot(
-        SYSTEM_PROMPT,
-        10, 10)
+    carl = CarlBot()
 
     while True:
         user_input = input("You: ")

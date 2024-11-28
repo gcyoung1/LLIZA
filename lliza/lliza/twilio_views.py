@@ -66,9 +66,7 @@ def log_message(message):
         print(message)
 
 def load_carlbot(psid: str):
-    carl = CarlBot(
-        SYSTEM_PROMPT,
-        10, 10)
+    carl = CarlBot()
     user = User.objects.filter(user_id__exact=psid).first()
     if user.encrypted_memory_dict_string is not None:
         memory_dict = encrypted_string_to_dict(ENCRYPTION_KEY, user.encrypted_memory_dict_string)
@@ -113,9 +111,7 @@ def webhook(request):
     body = request.POST.get('Body', None)
     psid = hashlib.sha256(from_number.encode()).hexdigest()
     text = body
-    blank_carl = CarlBot(
-        SYSTEM_PROMPT,
-        10, 10)
+    blank_carl = CarlBot()
     blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE)
     user_queryset = User.objects.filter(user_id__exact=psid)
     new_user = False
