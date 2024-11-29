@@ -65,17 +65,15 @@ def log_message(message):
     if logging_enabled:
         print(message)
 
-def load_carlbot(psid: str):
+def load_carlbot(user: User) -> CarlBot:
     carl = CarlBot()
-    user = User.objects.filter(user_id__exact=psid).first()
     if user.encrypted_memory_dict_string is not None:
         memory_dict = encrypted_string_to_dict(ENCRYPTION_KEY, user.encrypted_memory_dict_string)
         log_message(f"Loaded memory dict: {memory_dict}")
         carl.load_from_dict(memory_dict)
     return carl
 
-def save_carlbot(psid: str, carl: CarlBot):
-    user = User.objects.filter(user_id__exact=psid).first()
+def save_carlbot(user: User, carl: CarlBot):
     memory_dict = carl.save_to_dict()
     log_message(f"Saving memory dict: {memory_dict}")
     encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
@@ -165,7 +163,7 @@ def webhook(request):
         else:
             log_message("Processing message")
             log_message("Loading CarlBot")
-            carl = load_carlbot(psid)
+            carl = load_carlbot(user)
             log_message("Adding message to CarlBot")
             carl.add_message(role="user", content=text)
             log_message("Getting CarlBot response")
@@ -173,7 +171,7 @@ def webhook(request):
             log_message("Registering CarlBot response")
             carl.add_message(role="assistant", content=reply)
             log_message("Saving CarlBot")
-            save_carlbot(psid, carl)
+            save_carlbot(user, carl)
             user.num_messages += 1
             user.save()
 
