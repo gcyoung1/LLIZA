@@ -21,6 +21,7 @@ class CarlBot:
         self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
         self.max_user_message_chars = max_user_message_chars
+        self.n = 5
         self.summarizer_model = "gpt-4o-mini-2024-07-18"
         self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:110-dialogues-25-min-1500:AYedQAat" #"ft:gpt-4o-mini-2024-07-18:personal:148-dialogues-1500:AFwzSCDJ"
 
@@ -127,15 +128,49 @@ class CarlBot:
     def summary_buffer_str(self):
         return self.stringify_summary(self.summary_buffer)
 
+    def rank_responses(self, responses: List[str]) -> List[str]:
+        ranking_prompt = f"""
+        Below is the context for a dialogue, followed by {self.n} possible responses.
+        Your task is to rank the responses in order of appropriateness for the context.
+        
+        Here is the data:
+        [BEGIN DATA] 
+        ***
+        {self.stringify_dialogue(self.messages)}
+        ***
+        """
+        for i, response in enumerate(responses, start=1):
+            ranking_prompt += f"[Response {i}]\n{response}\n\n"
+        ranking_prompt += "[END DATA]"
+        ranking_prompt += """
+        Rank the responses in order of appropriateness for the context. Heavily penalize responses which hallucinate things that were not in the context or merely repeat the client's words. Reward responses which are empathetic, congruent, and reflect the client's feelings and attitudes.
+        Without yet ranking them, write a terse explanation of each ranking choice's appropriateness in the order they were presented (ie Response 1, Response 2...).
+        Then on a new line write a comma-separated list of the response numbers in order of appropriateness.
+        E.g. "2,1,3"
+        """
+        completion = client.chat.completions.create(
+            model=self.summarizer_model,
+            messages=[{"role": "user", "content": ranking_prompt}],
+            max_tokens=100*self.n,  # 100 left unfinished bullets
+            temperature=0.0)
+        ranking = completion.choices[0].message.content
+        ranks = ranking.split("\n")[-1].split(",")
+        return [responses[int(rank) - 1] for rank in ranks]
+
     def get_response(self):
         if self.crisis_mode:
             return self.crisis_response
+        
         response = client.chat.completions.create(
             model=self.chat_model,
             messages=self.messages,
-            temperature=0.4
+            temperature=0.3,
+            n=self.n
             )
-        return response.choices[0].message.content
+
+        message_choices = [choice.message.content for choice in response.choices]
+        ranked_responses = self.rank_responses(message_choices)
+        return ranked_responses[0]
 
     def load(self, dialogue_buffer, summary_buffer, crisis_mode):
         self.dialogue_buffer = dialogue_buffer
