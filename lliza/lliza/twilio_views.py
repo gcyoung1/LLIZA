@@ -80,6 +80,7 @@ def save_carlbot(psid: str, carl: CarlBot):
     log_message(f"Saving memory dict: {memory_dict}")
     encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
     user.encrypted_memory_dict_string = encrypted_memory_dict_string
+    print(f"Just for sanity, the decrypted version of the one I JUST saved: {encrypted_string_to_dict(ENCRYPTION_KEY, user.encrypted_memory_dict_string)}")
     user.save()
 
 def load_client():
@@ -112,6 +113,7 @@ def webhook(request):
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
     psid = hashlib.sha256(from_number.encode()).hexdigest()
+    log_message(f"Received message from {from_number} with PSID {psid}")
     text = body
     blank_carl = CarlBot()
     blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE)
@@ -122,8 +124,11 @@ def webhook(request):
         encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
         user = User.objects.create(user_id=psid, encrypted_memory_dict_string=encrypted_memory_dict_string)
         new_user = True
+        log_message("New user created")
     else:
+        assert len(user_queryset) == 1, f"Multiple users with psid {psid}"
         user = user_queryset.first()
+        log_message("Loaded user")
 
     if 'OptOutType' in request.POST:
         # I set up Advanced Opt-Out in Twilio, so we don't need to reply to these messages

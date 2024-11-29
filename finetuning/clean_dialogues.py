@@ -130,6 +130,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+
     os.makedirs(args.output_dir, exist_ok=True)
     for filename in os.listdir(args.input_dir):
         if not filename.endswith('.jsonl'):
@@ -158,6 +159,7 @@ def main():
             remove_ellipses(dialogue)
 
             cleaned_dialogues.append(dialogue)
+            
 
         util.write_dialogues_to_jsonl(cleaned_dialogues, os.path.join(args.output_dir, filename))
 
