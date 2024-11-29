@@ -148,12 +148,16 @@ class CarlBot:
         Then on a new line write a comma-separated list of the response numbers in order of appropriateness.
         E.g. "2,1,3"
         """
+        print("The ranking prompt is:")
+        print(ranking_prompt)
         completion = client.chat.completions.create(
             model=self.summarizer_model,
             messages=[{"role": "user", "content": ranking_prompt}],
             max_tokens=100*self.n,  # 100 left unfinished bullets
             temperature=0.0)
         ranking = completion.choices[0].message.content
+        print("The ranking is:")
+        print(ranking)
         ranks = ranking.split("\n")[-1].split(",")
         return [responses[int(rank) - 1] for rank in ranks]
 
