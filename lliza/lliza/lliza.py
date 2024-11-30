@@ -23,7 +23,7 @@ class CarlBot:
         self.max_user_message_chars = max_user_message_chars
         self.n = 5
         self.summarizer_model = "gpt-4o-mini-2024-07-18"
-        self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:110-dialogues-25-min-1500:AYedQAat" #"ft:gpt-4o-mini-2024-07-18:personal:148-dialogues-1500:AFwzSCDJ"
+        self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:110-dialogues-25-min-3000:AZ7sHZTx"
 
         # Initialize memory
         self.all_summary_points = [
