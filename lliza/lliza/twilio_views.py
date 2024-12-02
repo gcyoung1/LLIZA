@@ -106,6 +106,7 @@ def webhook(request):
     """Send a dynamic reply to an incoming text message"""
     # Print all the data from the incoming message
     from_number = request.POST.get('From', None)
+    is_me = "8583662653" in from_number
 
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
@@ -166,7 +167,7 @@ def webhook(request):
             log_message("Adding message to CarlBot")
             carl.add_message(role="user", content=text)
             log_message("Getting CarlBot response")
-            reply = carl.get_response()
+            reply = carl.get_response(is_me=is_me)
             log_message("Registering CarlBot response")
             carl.add_message(role="assistant", content=reply)
             log_message("Saving CarlBot")

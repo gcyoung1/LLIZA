@@ -157,8 +157,8 @@ class CarlBot:
         ranks = ranking.split("\n")[-1].split(",")
         return [responses[int(rank) - 1] for rank in ranks]
 
-    def get_response(self):
-        if self.crisis_mode:
+    def get_response(self, is_me: bool = False) -> str:
+        if self.crisis_mode and not is_me:
             return self.crisis_response
         
         response = client.chat.completions.create(
@@ -195,6 +195,6 @@ if __name__ == "__main__":
     while True:
         user_input = input("You: ")
         carl.add_message("user", user_input)
-        response = carl.get_response()
+        response = carl.get_response(True)
         print(f"Carl: {response}")
         carl.add_message("assistant", response)
