@@ -78,7 +78,6 @@ def save_carlbot(user: User, carl: CarlBot):
     log_message(f"Saving memory dict: {memory_dict}")
     encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
     user.encrypted_memory_dict_string = encrypted_memory_dict_string
-    print(f"Just for sanity, the decrypted version of the one I JUST saved: {encrypted_string_to_dict(ENCRYPTION_KEY, user.encrypted_memory_dict_string)}")
     user.save()
 
 def load_client():
