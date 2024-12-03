@@ -194,11 +194,13 @@ def message_status(request):
 
     # Check if the message is undelivered, and if so, resend it
     if message_status == 'undelivered':
-        print("We got one! Resending message")
+        print(f"We got one! Resending message {message_sid}")
         time.sleep(5)
         client = load_client()
         message = client.messages(message_sid).fetch()
-        send_message(message.to, message.body)
+        to = message.body['to']
+        body = message.body['body']
+        send_message(to, body)
 
     return HttpResponse(status=204)
 
