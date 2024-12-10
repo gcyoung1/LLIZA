@@ -195,7 +195,6 @@ def message_status(request):
     # Check if the message is undelivered, and if so, resend it
     if message_status == 'undelivered':
         print(f"We got one! Resending message {message_sid}")
-        time.sleep(5)
         client = load_client()
         message = client.messages(message_sid).fetch()
         to = message.body['to']
