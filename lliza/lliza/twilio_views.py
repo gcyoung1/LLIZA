@@ -29,20 +29,36 @@ HELP_MESSAGE = """
 Thanks for messaging Lliza, a therapy bot trained to speak like \
 the Client-Centered Therapist Carl Rogers.
 
-Lliza is here to listen. She won't give advice or direct you, \
-but she'll help you clarify your thoughts and feelings and find your own answers. \
-Lliza does best when you give her a lot to work with -- it's up to you to lead \
-the conversation. Lliza was trained on transcripts of in-person therapy sessions, \
-so it might be helpful to use speech-to-text and just talk.
+What to expect:
+- Lliza won't give advice.
+- Instead, she'll reflect back what she thinks she hears you saying.
+- These reflections are meant to help you clarify and gain acceptance of your thoughts and feelings.
+- It can feel really nice to just be understood, especially when you're feeling stuck or confused. Give it a shot!
 
-Lliza is not equipped to handle crises or provide emergency support \
-- if you're in crisis, please call the National Suicide Prevention Lifeline \
+How to get the most out of Lliza:
+- Short replies like “yeah” can be hard for Lliza to work with. \
+Lliza works best when you give her a lot to respond to, \
+even if it's disordered or just a stream of consciousness.
+- Take a moment to check whether Lliza’s responses match how you feel inside—-if not, let it know! (For more on this, look up "Focusing" by Eugene Gendlin.)
+- Lliza was trained on transcripts of in-person therapy sessions, \
+so type as if you were speaking, or even use voice-to-text.
+
+Example:
+You: “I feel stuck in my job, but I don’t know if leaving is the right move.”
+Lliza: “It sounds like you’re feeling torn—stuck where you are, but unsure about leaving.”
+You (Less helpful response): “Yeah.” (This response makes it hard to dive deeper. Try to share what feels most important about the situation.)
+You (More helpful response): “Yeah. I feel like if I leave, I might regret it, but if I stay, I’ll just keep feeling frustrated.” (This opens the door to exploring more about regret and frustration.)
+
+Lliza is not equipped to handle crises or provide emergency support. \
+If you mention self-harm or suicidal thoughts, Lliza will have to end the conversation. \
+If you're in crisis, please call the National Suicide Prevention Lifeline \
 at the phone number 988.
 
 FAQ:
 Who made this?
 It was developed by Griffin Young (https://www.linkedin.com/in/gcyoung1) \
--- to give feedback, email griffinwhy@gmail.com.
+-- to give feedback, email griffinwhy@gmail.com or fill out this google form: \
+https://forms.gle/tzPdTBxVpgvFmsBH9
 Where are my messages stored?
 Conversation history is encrypted and stored solely so that \
 Lliza can remember what the conversation is about. \
