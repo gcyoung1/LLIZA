@@ -57,7 +57,7 @@ at the phone number 988.
 FAQ:
 Who made this?
 It was developed by Griffin Young (https://www.linkedin.com/in/gcyoung1) \
--- to give feedback, email griffinwhy@gmail.com or fill out this google form: \
+-- to give feedback, email griffinwhy@gmail.com or anonymously fill out this google form: \
 https://forms.gle/tzPdTBxVpgvFmsBH9
 Where are my messages stored?
 Conversation history is encrypted and stored solely so that \
