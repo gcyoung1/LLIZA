@@ -40,7 +40,7 @@ How to get the most out of Lliza:
 Lliza works best when you give her a lot to respond to, \
 even if it's disordered or just a stream of consciousness.
 - Take a moment to check whether Lliza’s responses match how you feel inside—-if not, let it know! (For more on this, look up "Focusing" by Eugene Gendlin.)
-- Lliza was trained on transcripts of in-person therapy sessions, \
+- Lliza was trained on transcripts of in-person therapy sessions (such as https://youtu.be/eWDLHz4CLW8?feature=shared), \
 so type as if you were speaking, or even use voice-to-text.
 
 Example:
