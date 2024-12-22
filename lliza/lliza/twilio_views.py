@@ -42,6 +42,8 @@ even if it's disordered or just a stream of consciousness.
 - Take a moment to check whether Lliza’s responses match how you feel inside—-if not, let it know! (For more on this, look up "Focusing" by Eugene Gendlin.)
 - Lliza was trained on transcripts of in-person therapy sessions (such as https://youtu.be/eWDLHz4CLW8?feature=shared), \
 so type as if you were speaking, or even use voice-to-text.
+- It can hard to send the first message. If you want to schedule a session for Llize to reach out to you, \
+you can use this form: https://docs.google.com/forms/d/e/1FAIpQLSfZ5YAds1ZQ-R9snaxiJQ6nqdBTZepKll5p0YjoZmJCIZsI_A/viewform?usp=pp_url&entry.776076175={}
 
 Example:
 You: “I feel stuck in my job, but I don’t know if leaving is the right move.”
@@ -59,6 +61,7 @@ Who made this?
 It was developed by Griffin Young (https://www.linkedin.com/in/gcyoung1) \
 -- to give feedback, email griffinwhy@gmail.com or anonymously fill out this google form: \
 https://forms.gle/tzPdTBxVpgvFmsBH9
+
 Where are my messages stored?
 Conversation history is encrypted and stored solely so that \
 Lliza can remember what the conversation is about. \
@@ -126,21 +129,21 @@ def webhook(request):
 
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
-    psid = hashlib.sha256(from_number.encode()).hexdigest()
-    log_message(f"Received message from {from_number} with PSID {psid}")
+    user_id = cryptocode.encrypt(from_number, ENCRYPTION_KEY)
+    log_message(f"Received message from {from_number} with user_id {user_id}")
     text = body
     blank_carl = CarlBot()
-    blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE)
-    user_queryset = User.objects.filter(user_id__exact=psid)
+    blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE.format(user_id))
+    user_queryset = User.objects.filter(user_id__exact=user_id)
     new_user = False
     if not user_queryset.exists():
         memory_dict = blank_carl.save_to_dict()
         encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
-        user = User.objects.create(user_id=psid, encrypted_memory_dict_string=encrypted_memory_dict_string)
+        user = User.objects.create(user_id=user_id, encrypted_memory_dict_string=encrypted_memory_dict_string)
         new_user = True
         log_message("New user created")
     else:
-        assert len(user_queryset) == 1, f"Multiple users with psid {psid}"
+        assert len(user_queryset) == 1, f"Multiple users with user_id {user_id}"
         user = user_queryset.first()
         log_message("Loaded user")
 
@@ -169,9 +172,9 @@ def webhook(request):
         user.save()
         reply = DELETE_MESSAGE
     elif text.lower() == HELP_KEYWORD.lower():
-        reply = HELP_MESSAGE
+        reply = HELP_MESSAGE.format(user_id)
     elif new_user or (text.lower() == OPT_IN_KEYWORD.lower()):
-        reply = WELCOME_MESSAGE
+        reply = WELCOME_MESSAGE.format(user_id)
     else:
         if len(text) > 2100:
             log_message("Message too long")
