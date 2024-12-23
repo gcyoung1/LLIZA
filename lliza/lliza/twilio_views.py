@@ -266,6 +266,10 @@ def schedule_webhook(request):
 
     # Get the user
     user_id = data.get("User ID (Don't edit)")
+    if not user_id:
+        print("Error scheduling: no user ID")
+        return HttpResponse(status=404)
+    log_message(f"Received scheduling request for user {user_id}")
     number = cryptocode.decrypt(user_id, ENCRYPTION_KEY)
     user = get_user_from_number(number)
     if user is None:
