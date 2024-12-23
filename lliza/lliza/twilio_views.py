@@ -9,6 +9,8 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django_q.tasks import schedule
+from django_q.models import Schedule
 
 from lliza.lliza import CarlBot
 from lliza.models import User
@@ -222,4 +224,87 @@ def message_status(request):
 def health(request):
     return HttpResponse("Healthy", status=200)
 
+def send_intro_message(user_id) -> None:
+    """
+    Send an introductory message to a user for a new session.
 
+    :param user_id: User ID to send the message to
+    """
+    number = cryptocode.decrypt(user_id, ENCRYPTION_KEY)
+    is_me = number == "8583662653"
+    user = get_user_from_number(number)
+    if user is None:
+        print(f"Error sending intro message: no users for number {number}")
+        return
+    carl = load_carlbot(user)
+    new_session_message = carl.get_new_session_message(is_me=is_me)
+    carl.add_message(role="assistant", content=new_session_message)
+    save_carlbot(user, carl)
+    user.save()
+    send_message(number, new_session_message)
+
+# Webhook for receiving responses from a Google Form set up to schedule sessions
+@csrf_exempt
+@require_http_methods(["POST"])
+def schedule_webhook(request):
+    """
+    Receives a POST request from a Google Form containing scheduling information for a user,
+    schedules the sessions, and sends a confirmation message to the user.
+    Example POST request body:
+    {
+  "User ID (Don't edit)": "",
+  "What day of the week for the first session?": "Tuesday",
+  "What time for the first session of the week?": "08:00",
+  "What day of the week for the second session?": "None"
+}
+
+    :param request: POST request containing scheduling information
+    """
+    data = request.POST
+
+    # Get the user
+    user_id = data.get("User ID (Don't edit)")
+    number = cryptocode.decrypt(user_id, ENCRYPTION_KEY)
+    user = get_user_from_number(number)
+    if user is None:
+        print(f"Error scheduling: no users for number {number}")
+        return HttpResponse(status=404)
+    
+    # Delete all existing schedules for the user
+    schedules_matching_user = [schedule for schedule in Schedule.objects.all() if cryptocode.decrypt(schedule.name.split("_session")[0], ENCRYPTION_KEY) == number]
+    for schedule in schedules_matching_user:
+        schedule.delete()
+    message_to_send_user = f"Deleted {len(schedules_matching_user)} existing schedules."
+    
+    first_day = data.get("What day of the week for the first session?")
+    first_time = data.get("What time for the first session of the week?")
+    if first_day != "None":
+        hour, minute = first_time.split(":")
+        first_cron_string = f"{minute} {hour} * * {first_day}"
+        schedule(
+            "lliza.lliza.twilio_views.send_intro_message",
+            user_id,
+            name=f"{user_id}_session_first",
+            schedule_type="C",
+            cron=first_cron_string
+        )
+        message_to_send_user += f"\nScheduled first repeating session for {first_day} at {first_time}"
+    
+    second_day = data.get("What day of the week for the second session?")
+    second_time = data.get("What time for the second session of the week?")
+    if second_day is not None and second_day != "None": # Will be None if the first day is "None"
+        hour, minute = second_time.split(":")
+        second_cron_string = f"{minute} {hour} * * {second_day}"
+        schedule(
+            "lliza.lliza.twilio_views.send_intro_message",
+            user_id,
+            name=f"{user_id}_session_second",
+            schedule_type="C",
+            cron=second_cron_string
+        )
+        message_to_send_user += f"\nScheduled second repeating session for {second_day} at {second_time}"
+
+    
+    send_message(number, message_to_send_user)
+    
+    return HttpResponse(status=200)

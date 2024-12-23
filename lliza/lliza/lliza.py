@@ -188,6 +188,21 @@ class CarlBot:
             "crisis_mode": self.crisis_mode
         }
 
+    def get_new_session_message(self, is_me: bool = False) -> str:
+        """
+        Returns a message to start a new session.
+        This will be used when we send scheduled messages to 
+        begin new sessions.
+        It'd be helpful to generate one based on the past session history.
+
+        """
+        new_session_prompt = f"""
+        The previous session has ended. Let's start a new session.
+        Something neutral like "I"m not sure what you'd like to talk about, but whatever it is I'd be happy to listen."
+        It might be helpful to reference briefly what was talked about in the previous session.
+        """
+        self.dialogue_buffer += [{"role": "system", "content": new_session_prompt}]
+        return self.get_response(is_me=is_me)
 
 if __name__ == "__main__":
     carl = CarlBot()
