@@ -23,55 +23,51 @@ OPT_OUT_KEYWORD = "STOP"
 OPT_IN_KEYWORD = "START"
 DELETE_MESSAGE = "Your conversation history has been deleted from our servers."
 DELETE_KEYWORD = "DELETE"
-FIRST_SESSION_MESSAGE = "I'm looking forward to knowing you and whatever you'd like to talk about I'm very ready to listen to."
+FIRST_SESSION_MESSAGE = "I'm looking forward to knowing you. Whatever you'd like to talk about I'm very ready to listen to."
 HELP_KEYWORD = "HELP"
 HELP_MESSAGE = """
-Thanks for messaging Lliza, a therapy bot trained to speak like \
-the Client-Centered Therapist Carl Rogers.
+Thanks for messaging Lliza, a bot trained to speak like \
+famous therapist Carl Rogers.
 
 What to expect:
-- Lliza won't give advice.
-- Instead, she'll reflect back what she thinks she hears you saying.
-- These reflections are meant to help you clarify and gain acceptance of your thoughts and feelings.
-- It can feel really nice to just be understood, especially when you're feeling stuck or confused. Give it a shot!
+- Lliza won't give advice
+- Instead, it'll help you clarify your feelings
+- Being understood feels great if you're stuck or confused. Give it a shot!
 
-How to get the most out of Lliza:
-- Short replies like “yeah” can be hard for Lliza to work with. \
-Lliza works best when you give her a lot to respond to, \
-even if it's disordered or just a stream of consciousness.
-- Take a moment to check whether Lliza’s responses match how you feel inside—-if not, let it know! (For more on this, look up "Focusing" by Eugene Gendlin.)
-- Lliza was trained on transcripts of in-person therapy sessions (such as https://youtu.be/eWDLHz4CLW8?feature=shared), \
-so type as if you were speaking, or even use voice-to-text.
-- It can hard to send the first message. If you want to schedule a session for Llize to reach out to you, \
-you can use this form: https://docs.google.com/forms/d/e/1FAIpQLSfZ5YAds1ZQ-R9snaxiJQ6nqdBTZepKll5p0YjoZmJCIZsI_A/viewform?usp=pp_url&entry.776076175={}
+Tips:
+- Short replies = boring conversation
+- Check whether Lliza’s responses match how you feel inside—-if not, let it know! (See "Focusing" by Eugene Gendlin)
+- Lliza was trained on therapy sessions like https://youtu.be/eWDLHz4CLW8. \
+Try voice-to-text
+- The first message is hard. Schedule texts from Lliza: https://docs.google.com/forms/d/e/1FAIpQLSfZ5YAds1ZQ-R9snaxiJQ6nqdBTZepKll5p0YjoZmJCIZsI_A/viewform?usp=pp_url&entry.776076175={}
 
-Example:
-You: “I feel stuck in my job, but I don’t know if leaving is the right move.”
-Lliza: “It sounds like you’re feeling torn—stuck where you are, but unsure about leaving.”
-You (Less helpful response): “Yeah.” (This response makes it hard to dive deeper. Try to share what feels most important about the situation.)
-You (More helpful response): “Yeah. I feel like if I leave, I might regret it, but if I stay, I’ll just keep feeling frustrated.” (This opens the door to exploring more about regret and frustration.)
+E.g.:
+You: “I feel stuck, but I don’t know if leaving is the right move.”
+Lliza: “You’re feeling torn—stuck where you are, but unsure about leaving.”
+You (Less helpful): “Ya”
+You (More helpful): “If I leave, I might regret it, but if I stay, I’ll keep feeling frustrated.”
 
-Lliza is not equipped to handle crises or provide emergency support. \
-If you mention self-harm or suicidal thoughts, Lliza will have to end the conversation. \
-If you're in crisis, please call the National Suicide Prevention Lifeline \
-at the phone number 988.
+If you mention self-harm, Lliza ends the conversation. \
+For crises, call the Suicide Prevention Lifeline (988)
 
 FAQ:
-Who made this?
-It was developed by Griffin Young (https://www.linkedin.com/in/gcyoung1) \
--- to give feedback, email griffinwhy@gmail.com or anonymously fill out this google form: \
-https://forms.gle/tzPdTBxVpgvFmsBH9
-
-Where are my messages stored?
-Conversation history is encrypted and stored solely so that \
-Lliza can remember what the conversation is about. \
-It will never be used to train models and no humans will read it. \
-You can delete it at any time by texting DELETE.
+- Made by Griffin Young (https://www.linkedin.com/in/gcyoung1)
+- Feedback form: https://forms.gle/tzPdTBxVpgvFmsBH9
+- Messages are encrypted and only used for context
 
 Reply HELP to see this message again, STOP to unsubscribe, or DELETE \
-to remove your conversation history from our servers.
+to delete your conversation history
 """
-WELCOME_MESSAGE = f"{HELP_MESSAGE}\nAnd now Lliza can say hello:\n{FIRST_SESSION_MESSAGE}"
+WELCOME_MESSAGE = f"{HELP_MESSAGE}\nNow Lliza, say hello:\n{FIRST_SESSION_MESSAGE}"
+
+def get_user_from_number(number: str) -> User:
+    users = User.objects.all()
+    matching_users = [user for user in users if cryptocode.decrypt(user.user_id, ENCRYPTION_KEY) == number]
+    if len(matching_users) == 0:
+        return None
+    if len(matching_users) == 1:
+        return matching_users[0]
+    raise RuntimeError(f"Multiple users matching {number}")
 
 def dict_to_encrypted_string(secret, dictionary):
     return cryptocode.encrypt(json.dumps(dictionary), secret)
@@ -135,17 +131,16 @@ def webhook(request):
     text = body
     blank_carl = CarlBot()
     blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE.format(user_id))
-    user_queryset = User.objects.filter(user_id__exact=user_id)
+    user = get_user_from_number(from_number)
     new_user = False
-    if not user_queryset.exists():
+
+    if user is None:
         memory_dict = blank_carl.save_to_dict()
         encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
         user = User.objects.create(user_id=user_id, encrypted_memory_dict_string=encrypted_memory_dict_string)
         new_user = True
         log_message("New user created")
     else:
-        assert len(user_queryset) == 1, f"Multiple users with user_id {user_id}"
-        user = user_queryset.first()
         log_message("Loaded user")
 
     if 'OptOutType' in request.POST:
