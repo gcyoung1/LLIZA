@@ -263,7 +263,7 @@ def schedule_webhook(request):
     if request.method == "GET":
         return HttpResponse(status=200)
     data = request.POST
-
+    log_message(f"Received scheduling request: {data}")
     # Get the user
     user_id = data.get("User ID (Don't edit)")
     if not user_id:
