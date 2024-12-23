@@ -26,7 +26,10 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['polls-service-ijjp4culha-uc.a.run.app', 'lliza-production.up.railway.app']
+ALLOWED_HOSTS = ['polls-service-ijjp4culha-uc.a.run.app', 
+                 'lliza-production.up.railway.app',
+                 '107.178.192.32' # Google Forms IP for scheduling
+]
 
 # Application definition
 
