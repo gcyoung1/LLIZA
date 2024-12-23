@@ -245,7 +245,7 @@ def send_intro_message(user_id) -> None:
 
 # Webhook for receiving responses from a Google Form set up to schedule sessions
 @csrf_exempt
-@require_http_methods(["POST, GET"])
+@require_http_methods(["POST", "GET"])
 def schedule_webhook(request):
     """
     Receives a POST request from a Google Form containing scheduling information for a user,
