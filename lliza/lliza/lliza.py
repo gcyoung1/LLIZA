@@ -14,14 +14,14 @@ class CarlBot:
                  base_system_prompt=SYSTEM_PROMPT,
                  min_n_dialogue_buffer_messages=25,
                  max_n_dialogue_buffer_messages=50,
-                 max_summary_buffer_points=20,
+                 max_summary_buffer_points=40,
                  max_user_message_chars=700):
         self.max_n_dialogue_buffer_messages = max_n_dialogue_buffer_messages
         self.min_n_dialogue_buffer_messages = min_n_dialogue_buffer_messages
         self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
         self.max_user_message_chars = max_user_message_chars
-        self.n = 5
+        self.n = 10
         self.summarizer_model = "gpt-4o-mini-2024-07-18"
         self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:110-dialogues-25-min-6000:AZCDM2kA"
 
