@@ -318,7 +318,7 @@ def schedule_webhook(request):
     message_to_send_user = f"Deleted {len(schedules_matching_user)} existing schedules.\n"
     
     first_day = data.get("What day of the week for the first session?")
-    first_time = data.get("What time (military time EST) for the first session of the week?")
+    first_time = data.get("What time (EST) for the first session of the week?")
     if first_day != "None":
         first_cron_string = day_and_time_to_utc_cron_str(first_day, first_time)
         log_message(f"First day: {first_day}, first time: {first_time}")
@@ -333,7 +333,7 @@ def schedule_webhook(request):
         message_to_send_user += f"\nScheduled first repeating session for {first_day} at {first_time}"
     
     second_day = data.get("What day of the week for the second session?")
-    second_time = data.get("What time (military time EST) for the second session of the week?")
+    second_time = data.get("What time (EST) for the second session of the week?")
     if second_day is not None and second_day != "None": # Will be None if the first day is "None"
         log_message(f"Second day: {second_day}, second time: {second_time}")
         second_cron_string = day_and_time_to_utc_cron_str(second_day, second_time)
