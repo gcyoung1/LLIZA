@@ -333,9 +333,9 @@ def schedule_webhook(request):
             schedule_type="C",
             cron=second_cron_string
         )
-        message_to_send_user += f"\nScheduled second repeating session for {second_day} at {second_time}"
+        message_to_send_user += f"\nScheduled second repeating session for {second_day} at {second_time}\n"
 
-    
+    message_to_send_user += "Please note the actually sent message may arrive ~10-15 minutes before or after the scheduled time."
     send_message(number, message_to_send_user)
     
     return HttpResponse(status=200)
