@@ -235,7 +235,7 @@ def send_intro_message(user_id) -> None:
     """
     log_message(f"Sending intro message to {user_id}")
     number = cryptocode.decrypt(user_id, ENCRYPTION_KEY)
-    is_me = number == "8583662653"
+    is_me = "8583662653" in number
     user = get_user_from_number(number)
     if user is None:
         print(f"Error sending intro message: no users for number {number}")
