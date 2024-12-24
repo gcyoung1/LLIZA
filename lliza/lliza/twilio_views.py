@@ -13,6 +13,8 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_q import tasks
 from django_q.models import Schedule
+from croniter import croniter
+from datetime import datetime
 
 from lliza.lliza import CarlBot
 from lliza.models import User
@@ -267,7 +269,14 @@ def day_and_time_to_utc_cron_str(day: str, time: str) -> str:
         day_int += 1
         
     cron_string = f"{minute} {hour} * * {day_int}"
+
     return cron_string
+
+def get_next_cron_time(cron_string: str) -> str:
+    now = datetime.now()
+    cron = croniter(cron_string, now)
+    next_time = cron.get_next(datetime)
+    return next_time.strftime("%Y-%m-%d %H:%M:%S")
 
 # Webhook for receiving responses from a Google Form set up to schedule sessions
 @csrf_exempt
@@ -306,7 +315,7 @@ def schedule_webhook(request):
     schedules_matching_user = [schedule for schedule in Schedule.objects.all() if cryptocode.decrypt(literal_eval(schedule.args)[0], ENCRYPTION_KEY) == number]
     for schedule in schedules_matching_user:
         schedule.delete()
-    message_to_send_user = f"Deleted {len(schedules_matching_user)} existing schedules."
+    message_to_send_user = f"Deleted {len(schedules_matching_user)} existing schedules.\n"
     
     first_day = data.get("What day of the week for the first session?")
     first_time = data.get("What time (EST) for the first session of the week?")
@@ -318,7 +327,8 @@ def schedule_webhook(request):
             "lliza.twilio_views.send_intro_message",
             user_id,
             schedule_type="C",
-            cron=first_cron_string
+            cron=first_cron_string,
+            next_run=get_next_cron_time(first_cron_string)
         )
         message_to_send_user += f"\nScheduled first repeating session for {first_day} at {first_time}"
     
@@ -332,11 +342,11 @@ def schedule_webhook(request):
             "lliza.twilio_views.send_intro_message",
             user_id,
             schedule_type="C",
-            cron=second_cron_string
+            cron=second_cron_string,
+            next_run=get_next_cron_time(second_cron_string)
         )
         message_to_send_user += f"\nScheduled second repeating session for {second_day} at {second_time}\n"
 
-    message_to_send_user += "Please note the actually sent message may arrive ~10-15 minutes before or after the scheduled time."
     send_message(number, message_to_send_user)
     
     return HttpResponse(status=200)
