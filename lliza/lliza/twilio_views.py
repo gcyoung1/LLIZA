@@ -245,6 +245,27 @@ def send_intro_message(user_id) -> None:
     user.save()
     send_message(number, new_session_message)
 
+def day_and_time_to_utc_cron_str(day: str, time: str) -> str:
+    day_int = day.map({
+        'Sun': 0,
+        'Mon': 1,
+        'Tue': 2,
+        'Wed': 3,
+        'Thu': 4,
+        'Fri': 5,
+        'Sat': 6
+    })
+
+    hour, minute = time.split(":")
+    # Convert hour and possibly day from EST to UTC
+    hour = (int(hour) + 5)
+    if hour >= 24:
+        hour -= 24
+        day_int += 1
+        
+    cron_string = f"{minute} {hour} * * {day_int}"
+    return cron_string
+
 # Webhook for receiving responses from a Google Form set up to schedule sessions
 @csrf_exempt
 @require_http_methods(["POST", "GET"])
@@ -285,10 +306,9 @@ def schedule_webhook(request):
     message_to_send_user = f"Deleted {len(schedules_matching_user)} existing schedules."
     
     first_day = data.get("What day of the week for the first session?")
-    first_time = data.get("What time for the first session of the week?")
+    first_time = data.get("What time (EST) for the first session of the week?")
     if first_day != "None":
-        hour, minute = first_time.split(":")
-        first_cron_string = f"{minute} {hour} * * {first_day}"
+        first_cron_string = day_and_time_to_utc_cron_str(first_day, first_time)
         tasks.schedule(
             "lliza.lliza.twilio_views.send_intro_message",
             user_id,
@@ -299,10 +319,9 @@ def schedule_webhook(request):
         message_to_send_user += f"\nScheduled first repeating session for {first_day} at {first_time}"
     
     second_day = data.get("What day of the week for the second session?")
-    second_time = data.get("What time for the second session of the week?")
+    second_time = data.get("What time (EST) for the second session of the week?")
     if second_day is not None and second_day != "None": # Will be None if the first day is "None"
-        hour, minute = second_time.split(":")
-        second_cron_string = f"{minute} {hour} * * {second_day}"
+        second_cron_string = day_and_time_to_utc_cron_str(second_day, second_time)
         tasks.schedule(
             "lliza.lliza.twilio_views.send_intro_message",
             user_id,

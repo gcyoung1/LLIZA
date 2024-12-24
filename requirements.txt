@@ -7,3 +7,4 @@ psycopg2-binary # For connecting to postgres with Django
 dj-database-url # For connecting to postgres with Django
 cryptocode # For encrypting and decrypting data
 django-q2 # For scheduling messages
+croniter # For using cron syntax in Django-Q
