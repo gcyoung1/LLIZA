@@ -233,6 +233,7 @@ def send_intro_message(user_id) -> None:
 
     :param user_id: User ID to send the message to
     """
+    log_message(f"Sending intro message to {user_id}")
     number = cryptocode.decrypt(user_id, ENCRYPTION_KEY)
     is_me = number == "8583662653"
     user = get_user_from_number(number)
