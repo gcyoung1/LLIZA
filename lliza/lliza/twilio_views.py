@@ -246,7 +246,7 @@ def send_intro_message(user_id) -> None:
     send_message(number, new_session_message)
 
 def day_and_time_to_utc_cron_str(day: str, time: str) -> str:
-    day_int = day.map({
+    day_map = {
         'Sun': 0,
         'Mon': 1,
         'Tue': 2,
@@ -254,7 +254,8 @@ def day_and_time_to_utc_cron_str(day: str, time: str) -> str:
         'Thu': 4,
         'Fri': 5,
         'Sat': 6
-    })
+    }
+    day_int = day_map[day]
 
     hour, minute = time.split(":")
     # Convert hour and possibly day from EST to UTC
