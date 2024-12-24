@@ -10,7 +10,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from django_q.tasks import schedule
+from django_q import tasks
 from django_q.models import Schedule
 
 from lliza.lliza import CarlBot
@@ -289,7 +289,7 @@ def schedule_webhook(request):
     if first_day != "None":
         hour, minute = first_time.split(":")
         first_cron_string = f"{minute} {hour} * * {first_day}"
-        schedule(
+        tasks.schedule(
             "lliza.lliza.twilio_views.send_intro_message",
             user_id,
             name=f"{user_id}_session_first",
@@ -303,7 +303,7 @@ def schedule_webhook(request):
     if second_day is not None and second_day != "None": # Will be None if the first day is "None"
         hour, minute = second_time.split(":")
         second_cron_string = f"{minute} {hour} * * {second_day}"
-        schedule(
+        tasks.schedule(
             "lliza.lliza.twilio_views.send_intro_message",
             user_id,
             name=f"{user_id}_session_second",
