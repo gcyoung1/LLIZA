@@ -4,6 +4,7 @@ import json
 import hashlib
 import time
 import urllib
+from ast import literal_eval
 
 from django.http import HttpResponse
 from twilio.twiml.messaging_response import MessagingResponse
@@ -301,7 +302,7 @@ def schedule_webhook(request):
         return HttpResponse(status=404)
     
     # Delete all existing schedules for the user
-    schedules_matching_user = [schedule for schedule in Schedule.objects.all() if cryptocode.decrypt(schedule.name.split("_session")[0], ENCRYPTION_KEY) == number]
+    schedules_matching_user = [schedule for schedule in Schedule.objects.all() if cryptocode.decrypt(literal_eval(schedule.args)[0], ENCRYPTION_KEY) == number]
     for schedule in schedules_matching_user:
         schedule.delete()
     message_to_send_user = f"Deleted {len(schedules_matching_user)} existing schedules."
@@ -313,7 +314,6 @@ def schedule_webhook(request):
         tasks.schedule(
             "lliza.lliza.twilio_views.send_intro_message",
             user_id,
-            name=f"{user_id}_session_first",
             schedule_type="C",
             cron=first_cron_string
         )
@@ -326,7 +326,6 @@ def schedule_webhook(request):
         tasks.schedule(
             "lliza.lliza.twilio_views.send_intro_message",
             user_id,
-            name=f"{user_id}_session_second",
             schedule_type="C",
             cron=second_cron_string
         )
