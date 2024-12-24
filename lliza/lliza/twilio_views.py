@@ -3,6 +3,7 @@ import cryptocode
 import json
 import hashlib
 import time
+import urllib
 
 from django.http import HttpResponse
 from twilio.twiml.messaging_response import MessagingResponse
@@ -132,7 +133,8 @@ def webhook(request):
     log_message(f"Received message from {from_number} with user_id {user_id}")
     text = body
     blank_carl = CarlBot()
-    blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE.format(user_id))
+    url_compatible_user_id = urllib.parse.quote(user_id)
+    blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE.format(url_compatible_user_id))
     user = get_user_from_number(from_number)
     new_user = False
 
@@ -170,9 +172,9 @@ def webhook(request):
         user.save()
         reply = DELETE_MESSAGE
     elif text.lower() == HELP_KEYWORD.lower():
-        reply = HELP_MESSAGE.format(user_id)
+        reply = HELP_MESSAGE.format(url_compatible_user_id)
     elif new_user or (text.lower() == OPT_IN_KEYWORD.lower()):
-        reply = WELCOME_MESSAGE.format(user_id)
+        reply = WELCOME_MESSAGE.format(url_compatible_user_id)
     else:
         if len(text) > 2100:
             log_message("Message too long")
