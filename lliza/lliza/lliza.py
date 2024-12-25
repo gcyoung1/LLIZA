@@ -1,5 +1,6 @@
 import urllib3
 from openai import OpenAI
+import random
 
 client = OpenAI()
 from typing import List, Dict
@@ -196,17 +197,27 @@ class CarlBot:
         It'd be helpful to generate one based on the past session history.
 
         """
+        new_session_messages = [
+            "Well, how are things today?",
+            "How's it today?",
+            "What’s on your mind today that you would like to talk about?",
+            "Well – how do you want to use the time today?",
+            "How goes it today?",
+            "Well, what today?",
+            "Well what's new today?",
+            "Where do you want to start today?",
+            "Well, do you know where you want to begin this morning?",
+            "Well, how goes the battle?"
+        ]
         new_session_prompt = f"""
-        The previous session has ended. Let's start a new session.
-        Something neutral like "I"m not sure what you'd like to talk about, but whatever it is I'd be happy to listen."
-        It might be helpful to reference briefly what was talked about in the previous session.
+        The previous session has ended. The assistant should now prompt the user to begin a new session.
+        Something neutral like "Well, how are things today?"
+        Do not respond to this message, just start the new session.
         """
-        self.dialogue_buffer += [{"role": "system", "content": new_session_prompt}]
-        return self.get_response(is_me=is_me)
+        return random.choice(new_session_messages)
 
 if __name__ == "__main__":
     carl = CarlBot()
-
     while True:
         user_input = input("You: ")
         carl.add_message("user", user_input)
