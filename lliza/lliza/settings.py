@@ -127,5 +127,9 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 Q_CLUSTER = {
-    'orm': 'default'
+    'orm': 'default',
+    'workers': 1,
+    'max_attempts': 1,
+    'retry': 300,
+    'catch_up': False,
 }
