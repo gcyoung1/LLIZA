@@ -22,7 +22,7 @@ class CarlBot:
         self.max_summary_buffer_points = max_summary_buffer_points
         self.base_system_prompt = base_system_prompt
         self.max_user_message_chars = max_user_message_chars
-        self.n = 10
+        self.n = 5
         self.summarizer_model = "gpt-4o-mini-2024-07-18"
         self.chat_model = "ft:gpt-4o-mini-2024-07-18:personal:110-dialogues-25-min-6000:AZCDM2kA"
 
