@@ -188,6 +188,15 @@ class CarlBot:
             "summary_buffer": self.summary_buffer,
             "crisis_mode": self.crisis_mode
         }
+    
+    def get_new_session_prompt(self) -> str:
+        new_session_prompt = """
+        The previous session has ended. The assistant should now prompt the user to begin a new session.
+        Something neutral like "Well, how are things today?"
+        Do not respond to this message, just start the new session.
+        """
+        return new_session_prompt
+
 
     def get_new_session_message(self, is_me: bool = False) -> str:
         """
@@ -209,11 +218,6 @@ class CarlBot:
             "Well, do you know where you want to begin this morning?",
             "Well, how goes the battle?"
         ]
-        new_session_prompt = f"""
-        The previous session has ended. The assistant should now prompt the user to begin a new session.
-        Something neutral like "Well, how are things today?"
-        Do not respond to this message, just start the new session.
-        """
         return random.choice(new_session_messages)
 
 if __name__ == "__main__":

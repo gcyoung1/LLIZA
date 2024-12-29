@@ -250,6 +250,7 @@ def send_intro_message(user_id) -> None:
             schedule.delete()
     else:
         carl = load_carlbot(user)
+        carl.add_message(role="system", content=carl.get_new_session_prompt())
         new_session_message = carl.get_new_session_message(is_me=is_me)
         carl.add_message(role="assistant", content=new_session_message)
         save_carlbot(user, carl)
