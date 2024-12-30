@@ -41,11 +41,17 @@ def extract_message(line):
     # The issue here is that some dialogues have e.g. 'C24 (continued):' and others have 'C4 I feel so bad (T: Mm-hmm).'
     # So you can't just split on the first colon
     # But you also can't just grab the speaker because then (continued) will be included in the content
+    other_speakers = ['Participant', 'Man', 'Woman', 'new']
     speaker_pattern = r'(\d+)\s*([CTS])|([CTS])\s*(\d+[A-Za-z]{0,3})' # Groups are (counter, speaker) or (speaker, counter)
-    # match = re.match(r'^(?:\s*(?:[^ ]*:|.*:)|([^ ]* ?[^ ]*)\s*\:(.*))', line)
+    # Can't just match e.g. C24 because of lines like "C238 is a particularly good clarification"
+    # match = re.match(r'^(?:\s*(?:[^ ]*:|.*:)|([^ ]* ?[^ ]*)\s*\:(.*))', line) 
     if ':' in line: 
         tag, content = line.split(':', 1)
         tag, content = tag.strip(), content.strip()
+
+        if tag in other_speakers:
+            return tag, None, content
+
         match = re.match(f"^{speaker_pattern}$", tag)
         if match is not None:
             if match.group(1) is not None:
@@ -70,7 +76,7 @@ def extract_message(line):
 def dialogue_to_str(dialogue):
     return '\n'.join([f"{message.get('speaker', message.get('role'))}: {message['content']}" for message in dialogue])
 
-def split_into_dialogues(lines):
+def split_into_dialogues(lines,fname):
     messages = []
     tags = set()
     last_none = False
@@ -82,7 +88,7 @@ def split_into_dialogues(lines):
             continue
         message_tup = extract_message(line)
         if message_tup is None:
-            is_discussion = (line == 'Discussion' or line == 'Commentary' or line == 'DISCUSSION' or line == 'COMMENTS' or line == "Comments" or line == "Comments on Session")
+            is_discussion = (line.lower().lstrip().split()[0] in ['discussion', 'commentary', 'excerpt', 'comments']) and (':' not in line)
             if (last_none or is_discussion) and messages and messages[-1] is not None: # End of previous dialogue, add delimiter (None) and reset tag list
                 if messages:
                     if not last_discussion:
@@ -94,10 +100,22 @@ def split_into_dialogues(lines):
             continue
         last_none = False
         speaker, counter, content = message_tup
-        if (speaker,counter) in tags or any(delimiter in speaker for delimiter in (',', '‑', '-', '&')): # Skip commentary lines
+        if (counter is not None) and ((speaker,counter) in tags):
+            if ("the counselor" not in content.lower()) and ("the client" not in content.lower()) and ('Bryan' not in fname):
+                error_str = f"DS,{speaker},{counter},{content},{fname}\n"
+                with open("error.txt","a") as f:
+                    f.write(error_str)
+            continue
+        if any(delimiter in speaker for delimiter in (',', '‑', '-', '&')): # Skip commentary lines
+            error_str = f"CL,{speaker},{counter},{content},{fname}\n"
             continue
         if speaker == 'Commentary':
             continue
+        # print and set trace if the speaker speaks twice in a row
+        if messages and messages[-1] is not None and messages[-1]['speaker'] == speaker:
+            if (speaker not in ['Man', 'Woman', 'Participant', 'new']) and ('Reiko' not in fname) and ('Jim' not in fname):
+                with open("error.txt","a") as f:
+                    f.write(f"SS,{speaker},{counter},{content},{fname}\n")
         messages.append({'speaker': speaker, 'content': content})
         tags.add((speaker, counter))
 
@@ -119,7 +137,7 @@ def main():
 
         with open(os.path.join(args.input_dir, fname), 'r') as f:
             lines = f.readlines()
-        dialogues = split_into_dialogues(lines)
+        dialogues = split_into_dialogues(lines,fname)
         util.write_dialogues_to_jsonl(dialogues, os.path.join(args.output_dir, os.path.splitext(fname)[0] + '.jsonl'))
 
 if __name__ == '__main__':

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,9 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['polls-service-ijjp4culha-uc.a.run.app']
+ALLOWED_HOSTS = ['polls-service-ijjp4culha-uc.a.run.app', 
+                 'lliza-production.up.railway.app',
+                 '107.178.192.32' # Google Forms IP for scheduling
+]
 
 # Application definition
 
@@ -36,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_q',
     "lliza",
 ]
 
@@ -49,7 +54,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "lliza.urls"
+ROOT_URLCONF = "lliza.twilio_urls"
 
 TEMPLATES = [
     {
@@ -72,11 +77,10 @@ WSGI_APPLICATION = "lliza.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+DATABASE_URL = os.getenv("DATABASE_PUBLIC_URL")
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=1800),
 }
 
 # Password validation
@@ -122,9 +126,10 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "TIMEOUT": 60 * 60 * 5,  # 5 hours
-    }
+Q_CLUSTER = {
+    'orm': 'default',
+    'workers': 1,
+    'max_attempts': 1,
+    'retry': 300,
+    'catch_up': False,
 }

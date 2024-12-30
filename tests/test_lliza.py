@@ -6,7 +6,7 @@ from lliza.lliza import CarlBot
 
 @pytest.fixture
 def bot():
-    return CarlBot("Test System Prompt",
+    return CarlBot(base_system_prompt="Test System Prompt",
                    max_n_dialogue_buffer_messages=4,
                    max_summary_buffer_points=2)
 

@@ -11,6 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lliza.settings")
+for k, v in os.environ.items(): 
+    print(f"{k}: {v}")
 
 application = get_wsgi_application()
