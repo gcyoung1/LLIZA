@@ -31,8 +31,7 @@ class ConversationRelayConsumer(WebsocketConsumer):
             log_message(json.dumps(data, indent=4))
             response = VoiceResponse()
             response.say("Hello, this is Carl. How can I help you today?")
-            return HttpResponse(str(response), content_type="application/xml")
-
+            self.send(text_data=str(response))
 
             # if data['event'] == 'text':
             #     # Extract user and message
