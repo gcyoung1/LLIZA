@@ -1,11 +1,9 @@
 from channels.generic.websocket import WebsocketConsumer
 import json
-from django.contrib.auth.models import User  # Adjust based on your user model
 
 from lliza.utils import get_user_from_number, log_message, load_carlbot, save_carlbot
 
-from twilio.twiml.messaging_response import MessagingResponse
-from twilio.twiml.voice_response import VoiceResponse, Connect
+from twilio.twiml.voice_response import VoiceResponse
 from twilio.rest import Client
 
 from django.http import HttpResponse
