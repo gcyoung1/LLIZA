@@ -25,7 +25,7 @@ application = ProtocolTypeRouter({
     "websocket": AuthMiddlewareStack(
         URLRouter(
             [
-                path("conversation-relay/", consumers.ConversationRelayConsumer.as_asgi()),
+                path("conversation-relay", consumers.ConversationRelayConsumer.as_asgi()),
             ]
         )
     ),
