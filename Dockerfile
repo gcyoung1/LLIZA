@@ -9,8 +9,7 @@ WORKDIR $APP_HOME
 COPY . ./
 
 # Install production dependencies.
-# redis
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip cache purge && pip install --no-cache-dir -r requirements.txt
 
 # Add app to PYTHONPATH
 ENV PYTHONPATH=lliza
