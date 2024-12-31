@@ -23,11 +23,11 @@ class ConversationRelayConsumer(WebsocketConsumer):
             self.user.save()
         log_message("Client disconnected.")
 
-    def receive(self, json_data):
+    def receive(self, text_data):
         """Handle incoming messages from Twilio."""
         try:
             log_message("Processing incoming message")
-            data = json.loads(json_data)
+            data = json.loads(text_data)
             # pretty print the data
             log_message(json.dumps(data, indent=4))
 
