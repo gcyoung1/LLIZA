@@ -40,15 +40,6 @@ class ConversationRelayConsumer(WebsocketConsumer):
             elif data['type'] == 'error':
                 self.handle_error(data)
 
-            #     # Send response back to Twilio
-            #     twilio_response = {
-            #         "event": "text",
-            #         "message": {
-            #             "content": reply
-            #         }
-            #     }
-            #     self.send(text_data=json.dumps(twilio_response))
-
         except Exception as e:
             log_message(f"Error processing message: {e}")
 
@@ -68,7 +59,9 @@ class ConversationRelayConsumer(WebsocketConsumer):
     def handle_prompt(self, data):
         """Handle messages from user"""
         try:
-            self.carlbot.add_message(role="user", content=data['voicePrompt'])
+            raw_message = data['voicePrompt']
+            unicode_decoded = raw_message.encode().decode('unicode-escape')
+            self.carlbot.add_message(role="user", content=unicode_decoded)
             reply = self.carlbot.get_response(is_me=False)
             self.carlbot.add_message(role="assistant", content=reply)            
             self.user.num_messages += 1
@@ -85,7 +78,7 @@ class ConversationRelayConsumer(WebsocketConsumer):
         """Handle user interruptions"""
         try:
             amended_content = data["utteranceUntilInterrupt"] + "..."
-            self.carlbot.dialogue_buffer[-1] = {"role:": "assistant",
+            self.carlbot.dialogue_buffer[-1] = {"role": "assistant",
                                                 "content": amended_content}
         except Exception as e:
             log_message(f"Error processing interrupt: {e}")
