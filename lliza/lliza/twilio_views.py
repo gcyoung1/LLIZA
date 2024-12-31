@@ -6,9 +6,12 @@ import time
 import urllib
 from ast import literal_eval
 
-from django.http import HttpResponse
+
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.twiml.voice_response import VoiceResponse, Connect
 from twilio.rest import Client
+
+from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_q import tasks
@@ -65,15 +68,24 @@ Reply HELP to see this message again, STOP to unsubscribe, or DELETE \
 to delete your conversation history
 """
 WELCOME_MESSAGE = f"{HELP_MESSAGE}\nNow Lliza, say hello:\n{FIRST_SESSION_MESSAGE}"
+LLIZA_VOICE = "Google.en-US-Journey-F"
 
 def get_user_from_number(number: str) -> User:
     users = User.objects.all()
     matching_users = [user for user in users if cryptocode.decrypt(user.user_id, ENCRYPTION_KEY) == number]
     if len(matching_users) == 0:
-        return None
-    if len(matching_users) == 1:
-        return matching_users[0]
-    raise RuntimeError(f"Multiple users matching {number}")
+        user_id = cryptocode.encrypt(number, ENCRYPTION_KEY)
+        blank_carl = CarlBot()
+        memory_dict = blank_carl.save_to_dict()
+        encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
+        user = User.objects.create(user_id=user_id, encrypted_memory_dict_string=encrypted_memory_dict_string)
+        log_message("New user created")
+    elif len(matching_users) == 1:
+        user = matching_users[0]
+        log_message("Loaded user")
+    else:
+        raise RuntimeError(f"Multiple users matching {number}")
+    return user
 
 def dict_to_encrypted_string(secret, dictionary):
     return cryptocode.encrypt(json.dumps(dictionary), secret)
@@ -122,6 +134,12 @@ def send_message(to, body):
         body=body
     )
 
+def delete_memory(user: User):
+    memory_dict = CarlBot().save_to_dict()
+    encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
+    user.encrypted_memory_dict_string = encrypted_memory_dict_string
+    user.save()
+
 @csrf_exempt
 def webhook(request):
     """Send a dynamic reply to an incoming text message"""
@@ -132,23 +150,13 @@ def webhook(request):
     # Get the message the user sent our Twilio number
     body = request.POST.get('Body', None)
     log_message(f"Received message from {from_number}")
-    user_id = cryptocode.encrypt(from_number, ENCRYPTION_KEY)
-    log_message(f"Received message from {from_number} with user_id {user_id}")
-    text = body
-    blank_carl = CarlBot()
-    url_compatible_user_id = urllib.parse.quote(user_id)
-    blank_carl.add_message(role="assistant", content=WELCOME_MESSAGE.format(url_compatible_user_id))
     user = get_user_from_number(from_number)
+    log_message(f"Received message from {from_number} with user_id {user.user_id}")
+    text = body
+    
+    url_compatible_user_id = urllib.parse.quote(user.user_id)
+    
     new_user = False
-
-    if user is None:
-        memory_dict = blank_carl.save_to_dict()
-        encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
-        user = User.objects.create(user_id=user_id, encrypted_memory_dict_string=encrypted_memory_dict_string)
-        new_user = True
-        log_message("New user created")
-    else:
-        log_message("Loaded user")
 
     if 'OptOutType' in request.POST:
         # I set up Advanced Opt-Out in Twilio, so we don't need to reply to these messages
@@ -156,10 +164,7 @@ def webhook(request):
         if text.lower() == OPT_OUT_KEYWORD.lower():
             log_message("Opting out")
             user.opt_out = True
-            memory_dict = blank_carl.save_to_dict()
-            encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
-            user.encrypted_memory_dict_string = encrypted_memory_dict_string
-            user.save()
+            delete_memory(user)
             log_message("User opted out")
             return HttpResponse(status=200)
         elif text.lower() == OPT_IN_KEYWORD.lower():
@@ -169,15 +174,15 @@ def webhook(request):
     
     if text.lower() == DELETE_KEYWORD.lower():
         log_message("Deleting conversation history")
-        memory_dict = blank_carl.save_to_dict()
-        encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
-        user.encrypted_memory_dict_string = encrypted_memory_dict_string
-        user.save()
+        delete_memory(user)
         reply = DELETE_MESSAGE
     elif text.lower() == HELP_KEYWORD.lower():
         reply = HELP_MESSAGE.format(url_compatible_user_id)
     elif new_user or (text.lower() == OPT_IN_KEYWORD.lower()):
         reply = WELCOME_MESSAGE.format(url_compatible_user_id)
+        carl = load_carlbot(user)
+        carl.add_message(role="assistant", content=FIRST_SESSION_MESSAGE)
+        save_carlbot(user, carl)
     else:
         if len(text) > 2100:
             log_message("Message too long")
@@ -358,3 +363,32 @@ def schedule_webhook(request):
     send_message(number, message_to_send_user)
     
     return HttpResponse(status=200)
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def handle_incoming_call(request):
+    """Handle incoming call and return TwiML response to connect to Conversation Relay."""
+    response = VoiceResponse()
+    response.say("Please wait while we connect your call to Lliza.", voice="woman")
+    response.pause(length=1)
+    number = request.POST.get('From', None)
+    is_me = "8583662653" in number
+    user = get_user_from_number(number)
+    carl = load_carlbot(user)
+    carl.add_message(role="system", content=carl.get_new_session_prompt())
+    new_session_message = carl.get_new_session_message(is_me=is_me)
+    carl.add_message(role="assistant", content=new_session_message)
+    save_carlbot(user, carl)
+    user.save()
+    response.say(new_session_message, voice=LLIZA_VOICE)
+    return str(response)
+
+    # host = request.get_host()
+    # connect = Connect()
+    # connect.stream(
+    #     url=f'wss://{host}/conversation-relay',
+    #     content_type="application/json"
+    # )
+    # response.append(connect)
+
+#    return HttpResponse(str(response), content_type="application/xml")
