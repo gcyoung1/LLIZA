@@ -381,7 +381,7 @@ def handle_incoming_call(request):
     save_carlbot(user, carl)
     user.save()
     response.say(new_session_message, voice=LLIZA_VOICE)
-    return str(response)
+    return HttpResponse(str(response), content_type="application/xml")
 
     # host = request.get_host()
     # connect = Connect()
