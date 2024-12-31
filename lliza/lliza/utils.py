@@ -6,6 +6,7 @@ from lliza.lliza import CarlBot
 from lliza.models import User
 
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+logging_enabled = True
 
 def get_user_from_number(number: str) -> User:
     users = User.objects.all()
