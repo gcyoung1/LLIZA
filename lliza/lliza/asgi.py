@@ -12,9 +12,13 @@ from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import path
-from lliza import consumers
 
+# Consumers imports django models so we need to setup django first
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lliza.settings")
+import django
+django.setup()
+
+from lliza import consumers
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
