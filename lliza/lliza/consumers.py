@@ -20,41 +20,25 @@ class ConversationRelayConsumer(WebsocketConsumer):
         """Handle WebSocket disconnection."""
         if self.user is not None and self.carl is not None:
             save_carlbot(self.user, self.carlbot)
+            self.user.save()
         log_message("Client disconnected.")
 
-    def receive(self, text_data):
+    def receive(self, json_data):
         """Handle incoming messages from Twilio."""
         try:
             log_message("Processing incoming message")
-            data = json.loads(text_data)
+            data = json.loads(json_data)
             # pretty print the data
             log_message(json.dumps(data, indent=4))
-            self.send(text_data="Hello, world!")
 
-            # if data['event'] == 'text':
-            #     # Extract user and message
-            #     user_id = data.get('user_id')  # Ensure Twilio sends a user identifier
-            #     user = self.load_user(user_id)
-            #     text = data['message']['content']
-            #     log_message(f"Received user message: {text}")
-
-            #     # Process message with CarlBot
-            #     log_message("Loading CarlBot")
-            #     carl = load_carlbot(user)
-            #     log_message("Adding message to CarlBot")
-            #     carl.add_message(role="user", content=text)
-
-            #     log_message("Getting CarlBot response")
-            #     reply = carl.get_response(is_me=False)
-
-            #     log_message("Registering CarlBot response")
-            #     carl.add_message(role="assistant", content=reply)
-
-            #     log_message("Saving CarlBot")
-            #     save_carlbot(user, carl)
-
-            #     user.num_messages += 1
-            #     user.save()
+            if data['type'] == 'setup':
+                self.handle_setup(data)
+            elif data['type'] == 'prompt':
+                self.handle_prompt(data)
+            elif data['type'] == 'interrupt':
+                self.handle_interrupt(data)
+            elif data['type'] == 'error':
+                self.handle_error(data)
 
             #     # Send response back to Twilio
             #     twilio_response = {
@@ -67,3 +51,47 @@ class ConversationRelayConsumer(WebsocketConsumer):
 
         except Exception as e:
             log_message(f"Error processing message: {e}")
+
+    def handle_setup(self, data):
+        """Handle setup message from Twilio."""
+        try:
+            if data['direction'] == 'inbound':
+                number = data['from']
+            else:
+                number = data['to']
+            self.user = get_user_from_number(number)
+            self.carlbot = load_carlbot(self.user)
+            log_message("Setup complete.")
+        except Exception as e:
+            log_message(f"Error processing setup message: {e}")
+
+    def handle_prompt(self, data):
+        """Handle messages from user"""
+        try:
+            self.carlbot.add_message(role="user", content=data['voicePrompt'])
+            reply = self.carlbot.get_response(is_me=False)
+            self.carlbot.add_message(role="assistant", content=reply)            
+            self.user.num_messages += 1
+            twilio_response = {
+                "type": "text",
+                "token": reply,
+                "last": True
+            }
+            self.send(text_data=json.dumps(twilio_response))
+        except Exception as e:
+            log_message(f"Error processing prompt: {e}")
+
+    def handle_interrupt(self, data):
+        """Handle user interruptions"""
+        try:
+            amended_content = data["utteranceUntilInterrupt"] + "..."
+            self.carlbot.dialogue_buffer[-1] = {"role:": "assistant",
+                                                "content": amended_content}
+        except Exception as e:
+            log_message(f"Error processing interrupt: {e}")
+
+    def handle_error(self, data):
+        try:
+            print("Error: ", data)
+        except Exception as e:
+            log_message(f"Error processing error: {e}")

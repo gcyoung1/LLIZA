@@ -339,6 +339,10 @@ def handle_incoming_call(request):
     log_message(f"Host: {host}")
     connect.conversation_relay(
         url=f'wss://{host}/conversation-relay',
+        dtmf_detection=False,
+        interruptible=True,
+        welcome_greeting_interruptible=False,
+        voice=LLIZA_VOICE,
     )
     response.append(connect)
     return HttpResponse(str(response), content_type="application/xml")
