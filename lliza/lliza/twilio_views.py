@@ -336,6 +336,7 @@ def handle_incoming_call(request):
 
     connect = Connect()
     host = request.get_host()
+    log_message(f"Host: {host}")
     connect.conversation_relay(
         url=f'wss://{host}/conversation-relay',
     )
