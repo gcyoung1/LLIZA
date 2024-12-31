@@ -9,6 +9,7 @@ WORKDIR $APP_HOME
 COPY . ./
 
 # Install production dependencies.
+# cache purge bc "ERROR: THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE." when I added uvicorn
 RUN pip cache purge && pip install --no-cache-dir -r requirements.txt
 
 # Add app to PYTHONPATH

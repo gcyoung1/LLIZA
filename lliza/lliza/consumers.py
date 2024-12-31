@@ -1,4 +1,4 @@
-from channels.generic.websocket import SyncWebsocketConsumer
+from channels.generic.websocket import WebsocketConsumer
 import json
 from django.contrib.auth.models import User  # Adjust based on your user model
 
@@ -10,7 +10,7 @@ from twilio.rest import Client
 
 from django.http import HttpResponse
 
-class ConversationRelayConsumer(SyncWebsocketConsumer):
+class ConversationRelayConsumer(WebsocketConsumer):
     def connect(self):
         """Handle WebSocket connection."""
         log_message("Client connected to Conversation Relay.")
