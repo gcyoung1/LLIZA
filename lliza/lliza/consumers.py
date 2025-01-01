@@ -1,6 +1,7 @@
 from channels.generic.websocket import WebsocketConsumer
 import json
 import cryptocode
+import urllib
 from lliza.utils import get_user_from_number, log_message, load_carlbot, save_carlbot, ENCRYPTION_KEY, HELP_MESSAGE, send_message
 
 class ConversationRelayConsumer(WebsocketConsumer):
@@ -20,7 +21,9 @@ class ConversationRelayConsumer(WebsocketConsumer):
             self.user.save() #superfluous bc save_carlbot already saves user
             if self.new_user:
                 number = cryptocode.decrypt(self.user.user_id, ENCRYPTION_KEY)
-                send_message(number, HELP_MESSAGE)
+                url_compatible_user_id = urllib.parse.quote(self.user.user_id)
+                formatted_help = HELP_MESSAGE.format(url_compatible_user_id)
+                send_message(number, formatted_help)
             
         log_message("Client disconnected.")
 
