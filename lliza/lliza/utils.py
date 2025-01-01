@@ -52,7 +52,7 @@ Reply HELP to see this message again, STOP to unsubscribe, or DELETE \
 to delete your conversation history
 """
 WELCOME_MESSAGE = f"{HELP_MESSAGE}\nNow Lliza, say hello:\n{FIRST_SESSION_MESSAGE}"
-LLIZA_VOICE = "Polly.Salli-Neural"
+LLIZA_VOICE = "Google.en-US-Standard-C"
 
 def get_user_from_number(number: str) -> User:
     users = User.objects.all()
