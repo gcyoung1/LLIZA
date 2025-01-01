@@ -133,10 +133,12 @@ def make_connect(new_session_message):
 
 def make_call(to):
     client = load_client()
+
     host = os.environ["RAILWAY_PUBLIC_DOMAIN"]
+
     client.calls.create(from_=os.environ.get("TWILIO_PHONE_NUMBER"),
                         to=to,
-                        twiml=f"https://{host}/handle-call",
+                        url=f'https://{host}/handle-call',
                         timeout=15, # So that we don't reach voicemail
                         )
 
