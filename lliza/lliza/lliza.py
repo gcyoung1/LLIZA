@@ -219,6 +219,13 @@ class CarlBot:
             "Well, how goes the battle?"
         ]
         return random.choice(new_session_messages)
+    
+    def start_new_session(self, is_me: bool = False) -> str:
+        self.add_message(role="system", content=self.get_new_session_prompt())
+        new_session_message = self.get_new_session_message(is_me=is_me)
+        self.add_message(role="assistant", content=new_session_message)
+        return new_session_message
+
 
 if __name__ == "__main__":
     carl = CarlBot()

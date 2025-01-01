@@ -1,12 +1,7 @@
 from channels.generic.websocket import WebsocketConsumer
 import json
-
-from lliza.utils import get_user_from_number, log_message, load_carlbot, save_carlbot
-
-from twilio.twiml.voice_response import VoiceResponse
-from twilio.rest import Client
-
-from django.http import HttpResponse
+import cryptocode
+from lliza.utils import get_user_from_number, log_message, load_carlbot, save_carlbot, ENCRYPTION_KEY, HELP_MESSAGE, send_message
 
 class ConversationRelayConsumer(WebsocketConsumer):
     def connect(self):
@@ -14,13 +9,19 @@ class ConversationRelayConsumer(WebsocketConsumer):
         log_message("Client connected to Conversation Relay.")
         self.accept()
         self.user = None
+        self.new_user = False
         self.carlbot = None
+        self.is_me = False
 
     def disconnect(self, close_code):
         """Handle WebSocket disconnection."""
-        if self.user is not None and self.carl is not None:
+        if self.user is not None and self.carlbot is not None:
             save_carlbot(self.user, self.carlbot)
-            self.user.save()
+            self.user.save() #superfluous bc save_carlbot already saves user
+            if self.new_user:
+                number = cryptocode.decrypt(self.user.user_id, ENCRYPTION_KEY)
+                send_message(number, HELP_MESSAGE)
+            
         log_message("Client disconnected.")
 
     def receive(self, text_data):
@@ -50,7 +51,10 @@ class ConversationRelayConsumer(WebsocketConsumer):
                 number = data['from']
             else:
                 number = data['to']
+            self.is_me = "8583662653" in number
             self.user = get_user_from_number(number)
+            if self.user.num_messages == 0:
+                self.new_user = True
             self.carlbot = load_carlbot(self.user)
             log_message("Setup complete.")
         except Exception as e:
@@ -62,7 +66,7 @@ class ConversationRelayConsumer(WebsocketConsumer):
             raw_message = data['voicePrompt']
             unicode_decoded = raw_message.encode().decode('unicode-escape')
             self.carlbot.add_message(role="user", content=unicode_decoded)
-            reply = self.carlbot.get_response(is_me=False)
+            reply = self.carlbot.get_response(is_me=self.is_me)
             self.carlbot.add_message(role="assistant", content=reply)            
             self.user.num_messages += 1
             twilio_response = {

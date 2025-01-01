@@ -6,8 +6,7 @@ from ast import literal_eval
 
 
 from twilio.twiml.messaging_response import MessagingResponse
-from twilio.twiml.voice_response import VoiceResponse, Connect
-from twilio.rest import Client
+from twilio.twiml.voice_response import VoiceResponse
 
 from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
@@ -19,78 +18,7 @@ from datetime import datetime
 
 from lliza.lliza import CarlBot
 from lliza.models import User
-from lliza.utils import get_user_from_number, log_message, load_carlbot, save_carlbot
-
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
-SYSTEM_PROMPT = "You are LLiza, a Rogerian therapist. Your mission is to embody congruence (transparency about your own feelings and reactions), unconditional positive regard (a strong sense of caring for the client), and empathetic understanding (understand the client's frame of reference well enough to sense deeper meanings underneath the surface) so therapeutic movement occurs in your client.\nSpecifically, she'll explore her feelings more deeply, discover hidden aspects of herself, prize herself more, understand her own meanings better, be more real with herself, feel what's going on inside more clearly, relate more directly, see life less rigidly, accept herself, and recognize her own judgment capacity.\nStart by asking what the client wants to talk about. Don't give advice, direct the client, ask questions, interpret, bring in outside opinions, merely repeat facts, summarize all of what they said, or use long sentences. Allow the client to lead the session and discover their own answers while you understand their inner world, reflect their most important emotions succinctly, and be transparent with your reactions.\nExample 1:\n###\nClient: I would like to be more present and comfortable with myself so that other people, including my children and so forth, could do what they do, and that I could be a source of support and not be personally threatened  by every little thing. \nYou: And that has meaning to me. You'd like to be sufficiently accepting of yourself, that then you can be comfortable with what your children do or what other people do and not feel frightened, thrown off balance. \n###\nExample 2:\n###\nClient: I plan to go to work in the fall, and I believe that deep down I'm really afraid. \nYou: Are you afraid of the responsibility or, or what aspect of it is most frightening?\n###\n"
-OPT_OUT_KEYWORD = "STOP"
-OPT_IN_KEYWORD = "START"
-DELETE_MESSAGE = "Your conversation history has been deleted from our servers."
-DELETE_KEYWORD = "DELETE"
-FIRST_SESSION_MESSAGE = "I'm looking forward to knowing you. Whatever you'd like to talk about I'm very ready to listen to."
-HELP_KEYWORD = "HELP"
-HELP_MESSAGE = """
-Thanks for messaging Lliza, a bot trained to speak like \
-famous therapist Carl Rogers.
-
-What to expect:
-- Lliza won't give advice
-- Instead, it'll help you clarify your feelings
-- Being understood feels great if you're stuck or confused. Give it a shot!
-
-Tips:
-- Short replies = boring conversation
-- Check whether Lliza’s responses match how you feel inside—-if not, let it know! (See "Focusing" by Eugene Gendlin)
-- Lliza was trained on therapy sessions like https://youtu.be/eWDLHz4CLW8. \
-Try voice-to-text
-- The first message is hard. Schedule texts from Lliza: https://docs.google.com/forms/d/e/1FAIpQLSfZ5YAds1ZQ-R9snaxiJQ6nqdBTZepKll5p0YjoZmJCIZsI_A/viewform?usp=pp_url&entry.776076175={}
-
-E.g.:
-You: “I feel stuck, but I don’t know if leaving is the right move.”
-Lliza: “You’re feeling torn—stuck where you are, but unsure about leaving.”
-You (Less helpful): “Ya”
-You (More helpful): “If I leave, I might regret it, but if I stay, I’ll keep feeling frustrated.”
-
-If you mention self-harm, Lliza ends the conversation. \
-For crises, call the Suicide Prevention Lifeline (988)
-
-FAQ:
-- Made by Griffin Young (https://www.linkedin.com/in/gcyoung1)
-- Feedback form: https://forms.gle/tzPdTBxVpgvFmsBH9
-- Messages are encrypted and only used for context
-
-Reply HELP to see this message again, STOP to unsubscribe, or DELETE \
-to delete your conversation history
-"""
-WELCOME_MESSAGE = f"{HELP_MESSAGE}\nNow Lliza, say hello:\n{FIRST_SESSION_MESSAGE}"
-LLIZA_VOICE = "Google.en-US-Wavenet-C"
-
-def load_client():
-    return Client(
-        os.environ.get("TWILIO_ACCOUNT_SID"),
-        os.environ.get("TWILIO_AUTH_TOKEN")
-    )
-
-def send_message(to, body):
-    """
-    Send a message using the Twilio API
-
-    :param to: Number to send the message to
-    :param body: Body of the message
-    """
-    client = load_client()
-
-    client.messages.create(
-        messaging_service_sid=os.environ.get("TWILIO_MESSAGING_SERVICE_SID"),
-        to=to,
-        body=body
-    )
-
-def delete_memory(user: User):
-    memory_dict = CarlBot().save_to_dict()
-    encrypted_memory_dict_string = dict_to_encrypted_string(ENCRYPTION_KEY, memory_dict)
-    user.encrypted_memory_dict_string = encrypted_memory_dict_string
-    user.save()
+from lliza.utils import get_user_from_number, log_message, load_carlbot, save_carlbot, load_client, send_message, DELETE_KEYWORD, DELETE_MESSAGE, HELP_KEYWORD, HELP_MESSAGE, OPT_OUT_KEYWORD, OPT_IN_KEYWORD, FIRST_SESSION_MESSAGE, WELCOME_MESSAGE, ENCRYPTION_KEY, make_connect, make_call, delete_memory
 
 @csrf_exempt
 def webhook(request):
@@ -186,7 +114,7 @@ def message_status(request):
 def health(request):
     return HttpResponse("Healthy", status=200)
 
-def send_intro_message(user_id) -> None:
+def start_session(user_id, call_or_text) -> None:
     """
     Send an introductory message to a user for a new session.
 
@@ -196,7 +124,7 @@ def send_intro_message(user_id) -> None:
     number = cryptocode.decrypt(user_id, ENCRYPTION_KEY)
     is_me = "8583662653" in number
     user = get_user_from_number(number)
-    if user is None:
+    if not user:
         print(f"Error sending intro message: no users for number {number}")
         return
     if user.opt_out:
@@ -207,12 +135,13 @@ def send_intro_message(user_id) -> None:
             schedule.delete()
     else:
         carl = load_carlbot(user)
-        carl.add_message(role="system", content=carl.get_new_session_prompt())
-        new_session_message = carl.get_new_session_message(is_me=is_me)
-        carl.add_message(role="assistant", content=new_session_message)
+        new_session_message = carl.start_new_session(is_me=is_me)
         save_carlbot(user, carl)
-        user.save()
-        send_message(number, new_session_message)
+        if call_or_text == "Call":
+            send_message(number, new_session_message)
+        elif call_or_text == "Text":
+            connect = make_connect(new_session_message)
+            make_call(number, connect)
 
 def day_and_time_to_utc_cron_str(day: str, time: str) -> str:
     day_map = {
@@ -284,6 +213,7 @@ def schedule_webhook(request):
     
     first_day = data.get("What day of the week for the first session?")
     first_time = data.get("What time (EST) for the first session of the week?")
+    first_call_or_text = data.get("Text or call for the first session of the week?")
     if first_day != "None":
         first_cron_string = day_and_time_to_utc_cron_str(first_day, first_time)
         log_message(f"First day: {first_day}, first time: {first_time}")
@@ -291,6 +221,7 @@ def schedule_webhook(request):
         tasks.schedule(
             "lliza.twilio_views.send_intro_message",
             user_id,
+            first_call_or_text,
             schedule_type="C",
             cron=first_cron_string,
             next_run=get_next_cron_time(first_cron_string)
@@ -299,6 +230,7 @@ def schedule_webhook(request):
     
     second_day = data.get("What day of the week for the second session?")
     second_time = data.get("What time (EST) for the second session of the week?")
+    second_call_or_text = data.get("Text or call for the second session of the week?")
     if second_day is not None and second_day != "None": # Will be None if the first day is "None"
         log_message(f"Second day: {second_day}, second time: {second_time}")
         second_cron_string = day_and_time_to_utc_cron_str(second_day, second_time)
@@ -306,6 +238,7 @@ def schedule_webhook(request):
         tasks.schedule(
             "lliza.twilio_views.send_intro_message",
             user_id,
+            second_call_or_text,
             schedule_type="C",
             cron=second_cron_string,
             next_run=get_next_cron_time(second_cron_string)
@@ -323,26 +256,15 @@ def handle_incoming_call(request):
     response = VoiceResponse()
     response.say("Please wait while we connect your call to Lliza.", voice="woman")
     response.pause(length=1)
+
     number = request.POST.get('From', None)
     is_me = "8583662653" in number
     user = get_user_from_number(number)
-    carl = load_carlbot(user)
-    carl.add_message(role="system", content=carl.get_new_session_prompt())
-    new_session_message = carl.get_new_session_message(is_me=is_me)
-    carl.add_message(role="assistant", content=new_session_message)
-    save_carlbot(user, carl)
-    user.save()
-    response.say(new_session_message, voice=LLIZA_VOICE)
 
-    connect = Connect()
-    host = request.get_host()
-    log_message(f"Host: {host}")
-    connect.conversation_relay(
-        url=f'wss://{host}/conversation-relay',
-        dtmf_detection=False,
-        interruptible=True,
-        welcome_greeting_interruptible=False,
-        voice=LLIZA_VOICE,
-    )
+    carl = load_carlbot(user)
+    new_session_message = carl.start_new_session(is_me=is_me)
+    save_carlbot(user, carl)
+
+    connect = make_connect(new_session_message)
     response.append(connect)
     return HttpResponse(str(response), content_type="application/xml")
