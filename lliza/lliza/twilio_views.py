@@ -134,14 +134,13 @@ def start_session(user_id, call_or_text) -> None:
         for schedule in schedules_matching_user:
             schedule.delete()
     else:
-        carl = load_carlbot(user)
-        new_session_message = carl.start_new_session(is_me=is_me)
-        save_carlbot(user, carl)
         if call_or_text == "Text":
+            carl = load_carlbot(user)
+            new_session_message = carl.start_new_session(is_me=is_me)
+            save_carlbot(user, carl)
             send_message(number, new_session_message)
         elif call_or_text == "Call":
-            connect = make_connect(new_session_message)
-            make_call(number, connect)
+            make_call(number)
 
 def day_and_time_to_utc_cron_str(day: str, time: str) -> str:
     day_map = {
@@ -251,7 +250,7 @@ def schedule_webhook(request):
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
-def handle_incoming_call(request):
+def handle_call(request):
     """Handle incoming call and return TwiML response to connect to Conversation Relay."""
     response = VoiceResponse()
     response.say("Please wait while we connect your call to Lliza.", voice="woman")
