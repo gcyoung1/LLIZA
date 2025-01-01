@@ -219,7 +219,7 @@ def schedule_webhook(request):
         log_message(f"First day: {first_day}, first time: {first_time}")
         log_message(f"First cron string: {first_cron_string}")
         tasks.schedule(
-            "lliza.twilio_views.send_intro_message",
+            "lliza.twilio_views.start_session",
             user_id,
             first_call_or_text,
             schedule_type="C",
@@ -236,7 +236,7 @@ def schedule_webhook(request):
         second_cron_string = day_and_time_to_utc_cron_str(second_day, second_time)
         log_message(f"Second cron string: {second_cron_string}")
         tasks.schedule(
-            "lliza.twilio_views.send_intro_message",
+            "lliza.twilio_views.start_session",
             user_id,
             second_call_or_text,
             schedule_type="C",
