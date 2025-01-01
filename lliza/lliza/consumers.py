@@ -77,6 +77,7 @@ class ConversationRelayConsumer(WebsocketConsumer):
                 "token": reply,
                 "last": True
             }
+            log_message(f"Replying with: {reply}")
             self.send(text_data=json.dumps(twilio_response))
         except Exception as e:
             log_message(f"Error processing prompt: {e}")
@@ -85,6 +86,7 @@ class ConversationRelayConsumer(WebsocketConsumer):
         """Handle user interruptions"""
         try:
             amended_content = data["utteranceUntilInterrupt"] + "..."
+            log_message(f"Interrputed, amending {data['utteranceUntilInterrupt']} to {amended_content}")
             self.carlbot.dialogue_buffer[-1] = {"role": "assistant",
                                                 "content": amended_content}
         except Exception as e:
