@@ -16,7 +16,7 @@ OPT_OUT_KEYWORD = "STOP"
 OPT_IN_KEYWORD = "START"
 DELETE_MESSAGE = "Your conversation history has been deleted from our servers."
 DELETE_KEYWORD = "DELETE"
-FIRST_SESSION_MESSAGE = "I'm looking forward to knowing you. Whatever you'd like to talk about I'm very ready to listen to."
+FIRST_SESSION_MESSAGE = "Hi, I'm Lliza. I'm looking forward to knowing you. Whatever you'd like to talk about I'm very ready to listen to."
 HELP_KEYWORD = "HELP"
 HELP_MESSAGE = """
 Thanks for contacting Lliza, a bot trained to speak like \

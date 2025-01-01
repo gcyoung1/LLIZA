@@ -253,15 +253,17 @@ def schedule_webhook(request):
 def handle_call(request):
     """Handle incoming call and return TwiML response to connect to Conversation Relay."""
     response = VoiceResponse()
-    response.say("Please wait while we connect your call to Lliza.", voice="woman")
-    response.pause(length=1)
 
     number = request.POST.get('From', None)
     is_me = "8583662653" in number
     user = get_user_from_number(number)
 
     carl = load_carlbot(user)
-    new_session_message = carl.start_new_session(is_me=is_me)
+    if len(carl.dialogue_buffer) == 0:
+        new_session_message = FIRST_SESSION_MESSAGE
+        carl.add_message(role="assistant", content=new_session_message)
+    else:
+        new_session_message = carl.start_new_session(is_me=is_me)
     save_carlbot(user, carl)
 
     connect = make_connect(new_session_message)

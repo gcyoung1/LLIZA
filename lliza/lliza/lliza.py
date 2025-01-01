@@ -205,18 +205,16 @@ class CarlBot:
         begin new sessions.
         It'd be helpful to generate one based on the past session history.
 
-        """
+        """            
         new_session_messages = [
             "Well, how are things today?",
-            "How's it today?",
+            "How is it today?",
             "What’s on your mind today that you would like to talk about?",
             "Well – how do you want to use the time today?",
             "How goes it today?",
-            "Well, what today?",
             "Well what's new today?",
             "Where do you want to start today?",
-            "Well, do you know where you want to begin this morning?",
-            "Well, how goes the battle?"
+            "Well, do you know where you want to begin today?",
         ]
         return random.choice(new_session_messages)
     
