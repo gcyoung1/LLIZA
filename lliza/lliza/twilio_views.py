@@ -137,9 +137,9 @@ def start_session(user_id, call_or_text) -> None:
         carl = load_carlbot(user)
         new_session_message = carl.start_new_session(is_me=is_me)
         save_carlbot(user, carl)
-        if call_or_text == "Call":
+        if call_or_text == "Text":
             send_message(number, new_session_message)
-        elif call_or_text == "Text":
+        elif call_or_text == "Call":
             connect = make_connect(new_session_message)
             make_call(number, connect)
 
