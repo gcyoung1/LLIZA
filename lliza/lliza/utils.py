@@ -134,7 +134,7 @@ def make_connect(new_session_message):
 def make_call(to, connect):
     client = load_client()
 
-    client.calls.create(_from=os.environ.get("TWILIO_PHONE_NUMBER"),
+    client.calls.create(from=os.environ.get("TWILIO_PHONE_NUMBER"),
                         to=to,
                         twiml=str(connect))
 
