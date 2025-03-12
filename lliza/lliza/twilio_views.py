@@ -104,8 +104,8 @@ def message_status(request):
         print(f"We got one! Resending message {message_sid}")
         client = load_client()
         message = client.messages(message_sid).fetch()
-        to = message.body['to']
-        body = message.body['body']
+        to = message.to
+        body = message.body
         send_message(to, body)
 
     return HttpResponse(status=204)
