@@ -123,10 +123,10 @@ def make_connect(new_session_message):
     host = os.environ["RAILWAY_PUBLIC_DOMAIN"]
     connect.conversation_relay(
         url=f'wss://{host}/conversation-relay',
-        dtmf_detection=False,
-        interruptible=False, # The conversation turn detection is overzealous so if we turn this on the user will "interrupt" just by continuing to talk if they pause at all. Unfortunately there's no way to make the turn detection chill out, so it's better to just let the bot finish its thought.
-        welcome_greeting_interruptible=False,
-        voice=LLIZA_VOICE,
+        # dtmf_detection=False,
+        # interruptible=False, # The conversation turn detection is overzealous so if we turn this on the user will "interrupt" just by continuing to talk if they pause at all. Unfortunately there's no way to make the turn detection chill out, so it's better to just let the bot finish its thought.
+        # welcome_greeting_interruptible=False,
+        # voice=LLIZA_VOICE,
         welcome_greeting=new_session_message
     )
     return connect
