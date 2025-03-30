@@ -127,7 +127,7 @@ def make_connect(new_session_message):
         interruptible=False, # The conversation turn detection is overzealous so if we turn this on the user will "interrupt" just by continuing to talk if they pause at all. Unfortunately there's no way to make the turn detection chill out, so it's better to just let the bot finish its thought.
         welcomeGreetingInterruptible=False,
         voice=LLIZA_VOICE,
-        welcome_greeting=new_session_message
+        welcomeGreeting=new_session_message
     )
     return connect
 
