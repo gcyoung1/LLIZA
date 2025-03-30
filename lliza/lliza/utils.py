@@ -52,7 +52,7 @@ Reply HELP to see this message again, STOP to unsubscribe, or DELETE \
 to delete your conversation history
 """
 WELCOME_MESSAGE = f"{HELP_MESSAGE}\nNow Lliza, say hello:\n{FIRST_SESSION_MESSAGE}"
-LLIZA_VOICE = "Google.en-US-Standard-C"
+LLIZA_VOICE = "en-US-Standard-C"
 
 def get_user_from_number(number: str) -> User:
     users = User.objects.all()
@@ -126,7 +126,7 @@ def make_connect(new_session_message):
         dtmfDetection=False,
         interruptible=False, # The conversation turn detection is overzealous so if we turn this on the user will "interrupt" just by continuing to talk if they pause at all. Unfortunately there's no way to make the turn detection chill out, so it's better to just let the bot finish its thought.
         welcomeGreetingInterruptible=False,
-        # voice=LLIZA_VOICE,
+        voice=LLIZA_VOICE,
         welcomeGreeting=new_session_message
     )
     return connect
