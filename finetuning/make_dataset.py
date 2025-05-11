@@ -13,8 +13,15 @@ random.seed(42)
 def split_into_training_examples(dialogue: List[Dict], carlbot: CarlBot) -> List[List[Dict]]:
     training_examples = []
     for message in dialogue:
-        if message['role'] == 'assistant' and len(carlbot.messages) > 1: # don't include the first message
-            training_examples.append(carlbot.messages + [message])
+        if message['role'] == 'assistant': 
+            if len(carlbot.messages) == 0:
+                # don't include the first message
+                pass
+            elif set(message['content'].lower()) - {'u', 'h', 'm', '-', '.', ',', ' '} == set():
+                # don't include filler messages
+                pass
+            else:
+                training_examples.append(carlbot.messages + [message])
         carlbot.add_message(message['role'], message['content'])
 
     return training_examples
