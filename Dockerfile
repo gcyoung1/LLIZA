@@ -9,16 +9,18 @@ WORKDIR $APP_HOME
 COPY . ./
 
 # Install production dependencies.
-# redis
-RUN pip install --no-cache-dir -r requirements.txt
+# cache purge bc "ERROR: THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE." when I added uvicorn
+RUN pip cache purge && pip install --no-cache-dir -r requirements.txt
 
 # Add app to PYTHONPATH
 ENV PYTHONPATH=lliza
 
-# Run the web service on container startup. Here we use the gunicorn
-# webserver, with one worker process and 8 threads.
-# For environments with multiple CPU cores, increase the number of workers
-# to be equal to the cores available.
-# Timeout is set to 0 to disable the timeouts of the workers to allow Cloud Run to handle instance scaling.
+# Railway server has 8 cpus, so we use 8 workers
+# Each worker has 8 threads
+# Not sure if this is the best configuration
+# timeout 0 is heldover from cloudrun  and I'm not sure if it's necessary still
 CMD python lliza/manage.py qcluster & \
-exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 lliza.wsgi
+exec gunicorn -k uvicorn.workers.UvicornWorker \
+--workers 8 --threads 8 --timeout 0 \
+--bind :$PORT \
+lliza.asgi:application
